@@ -12,7 +12,12 @@ HOME_DIR="/home/$USER"
 SHELL="/usr/bin/bash"
 NEW_USER_NAME="CSC1107_GROUP_11"
 FOLDER_GROUP_11="$HOME_DIR/Folder_Group_11/"
+
 LKM_FOLDER="$HOME_DIR/linux/CSC1107_assignment/"
+LKM_FILE="CSC1107_11_kernel.ko"
+
+USER_FILE="CSC1107_11_user.c"
+USER_FILE_EXECUTABLE="CSC1107_11_user"
 
 # Check for sudo permissions
 if [ "$EUID" -ne 0 ]
@@ -75,7 +80,7 @@ ls -a $FOLDER_GROUP_11
 insmod $LKM_FOLDER/CSC1107_Group_11_kernel.ko
 
 # Part 12: Check if LKM is inserted with lsmod and grep
-lsmod | grep CSC1107_Group_11_kernel
+lsmod | grep $($LKM_FILE | cut -d '.' -f 1) # Get LKM name without extension
 
 # Part 13: Use modinfo to display information about LKM
 modinfo $LKM_FOLDER/CSC1107_Group_11_kernel.ko
@@ -84,10 +89,10 @@ modinfo $LKM_FOLDER/CSC1107_Group_11_kernel.ko
 dmesg | tail -n 5
 
 # Part 15: Compile user program
-gcc $LKM_FOLDER/CSC1107_Group_11_user.c -o $LKM_FOLDER/CSC1107_Group_11_user
+gcc $LKM_FOLDER/$USER_FILE -o $LKM_FOLDER/$USER_FILE_EXECUTABLE
 
 # Part 16: Run user program
-$LKM_FOLDER/CSC1107_Group_11_user
+$LKM_FOLDER/$USER_FILE_EXECUTABLE
 
 # Part 17 and 18 not needed here (to observe only)
 
@@ -95,7 +100,7 @@ $LKM_FOLDER/CSC1107_Group_11_user
 tail -n 12 /var/log/syslog
 
 # Part 20: Remove LKM
-rmmod CSC1107_Group_11_kernel
+rmmod $(LKM_FILE | cut -d '.' -f 1) # Get LKM name without extension
 
 # Part 21: Check if LKM is removed dmesg 
 dmesg | tail -3
