@@ -17,36 +17,45 @@ char* get_hash(const EVP_MD *type, char *msg);
 int main() {
     int i, fd;
     char ch, write_buf[100], read_buf[100];
-    int hash_type;
+    int hash_type = 0;
+    char *hash_string;
 
     //call getDataTime() and print
-    printf("%s\n", getDataTime());
+    char *dateTime = getDataTime();
+    printf("%s\n", dateTime);
 
     //prompt for type of hash to be used
     printf("Enter\n1) 512(SHA-512)\n2) SHA-284\n3) SHA-256\n4) SHA-1\n5) MD5\n ");
     scanf(" %1d", &hash_type);
 
-    if (hash_type == 1)
+    switch (hash_type)
     {
-        printf("You have selected 512(SHA-512)\n");
-    }
-    if (hash_type == 2)
-    {
-        printf("You have selected SHA-284\n");
-    }
-    if (hash_type == 3)
-    {
-        printf("You have selected SHA-256\n");
-    }
-    if (hash_type == 4)
-    {
-        printf("You have selected SHA-1\n");
-    }
-    if (hash_type == 5)
-    {
-        printf("You have selected MD5\n");
+        case 1:
+            printf("You have selected 512(SHA-512)\n");
+            hash_string = get_hash(EVP_sha512(), dateTime);
+            break;
+        case 2:
+            printf("You have selected SHA-384\n");
+            hash_string = get_hash(EVP_sha384(), dateTime);
+            break;
+        case 3:
+            printf("You have selected SHA-256\n");
+            hash_string = get_hash(EVP_sha256(), dateTime);
+            break;
+        case 4:
+            printf("You have selected SHA-1\n");
+            hash_string = get_hash(EVP_sha1(), dateTime);
+            break;
+        case 5:
+            printf("You have selected MD5\n");
+            hash_string = get_hash(EVP_md5(), dateTime);
+            break;
+        default:
+            printf("Invalid option\n");
+            break;
     }
 
+    printf("The hash string is:\n%s\n", hash_string);
 
     // Acquiring data
     printf("Enter data: ");
