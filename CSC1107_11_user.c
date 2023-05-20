@@ -8,7 +8,7 @@
 #include <time.h>
 #include <openssl/evp.h>
 
-#define DEVICE "/dev/CSC1107device"
+#define DEVICE "/dev/CSC1107_11_kernel"
 #define TIME_BUFF_SIZE 256
 
 char* getDataTime();
@@ -19,47 +19,47 @@ int main() {
     char ch, write_buf[100], read_buf[100];
     int hash_type = 0;
     char *hash_string;
+    const char *type_string;
+    const EVP_MD *type;
 
     //call getDataTime() and print
     char *dateTime = getDataTime();
     printf("%s\n", dateTime);
 
     //prompt for type of hash to be used
-    printf("Enter\n1) 512(SHA-512)\n2) SHA-284\n3) SHA-256\n4) SHA-1\n5) MD5\n ");
+    printf("Enter\n1) SHA-512\n2) SHA-384\n3) SHA-256\n4) SHA-1\n5) MD5\n ");
     scanf(" %1d", &hash_type);
 
     switch (hash_type)
     {
         case 1:
-            printf("You have selected 512(SHA-512)\n");
-            hash_string = get_hash(EVP_sha512(), dateTime);
+            type = EVP_sha512();
             break;
         case 2:
-            printf("You have selected SHA-384\n");
-            hash_string = get_hash(EVP_sha384(), dateTime);
+            type = EVP_sha384();
             break;
         case 3:
-            printf("You have selected SHA-256\n");
-            hash_string = get_hash(EVP_sha256(), dateTime);
+            type = EVP_sha256();
             break;
         case 4:
-            printf("You have selected SHA-1\n");
-            hash_string = get_hash(EVP_sha1(), dateTime);
+            type = EVP_sha1();
             break;
         case 5:
-            printf("You have selected MD5\n");
-            hash_string = get_hash(EVP_md5(), dateTime);
+            type = EVP_md5();
             break;
         default:
-            printf("Invalid option\n");
             break;
     }
-
+    type_string = EVP_MD_name(type);
+    printf("You have selected %s\n", type_string);
+    hash_string = get_hash(type, dateTime);
     printf("The hash string is:\n%s\n", hash_string);
 
-    // Acquiring data
-    printf("Enter data: ");
-    scanf(" %[^\n]", write_buf);
+    //format the data to be send to kernel
+    // 1. original sentence
+    // 2. hashed sentence
+    // 3. type of hash
+    snprintf(write_buf, 100, "%s\n%s\n%s", dateTime, type_string, hash_string);
 
     fd = open(DEVICE, O_RDWR);
 
@@ -73,8 +73,6 @@ int main() {
 
     // Reading data from the device
     read(fd, read_buf, sizeof(read_buf));
-
-    printf("The device sent: %s\n", read_buf);
 
     close(fd);
 
