@@ -61,6 +61,7 @@ int main() {
     // 3. type of hash
     snprintf(write_buf, 100, "%s\n%s\n%s", dateTime, type_string, hash_string);
 
+    free(hash_string);
     fd = open(DEVICE, O_RDWR);
 
     if(fd == -1){
