@@ -27,6 +27,9 @@ static int device_open(struct inode *, struct file *);
 static int device_release(struct inode *, struct file *);
 static ssize_t device_read(struct file *, char *, size_t, loff_t *);
 static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
+char *get_hash(char *hash_type, char *original_sentence);
+static struct sdesc *init_sdesc(struct crypto_shash *alg);
+static int calc_hash(struct crypto_shash *alg, const unsigned char *data, unsigned int datalen, unsigned char *digest);
 
 #define SUCCESS 0
 #define DEVICE_NAME "CSC1107_11_kernel"   /* Dev name as it appears in /proc/devices   */
@@ -50,6 +53,11 @@ static char *line;
 static const char *delimiter = "\n";
 
 static struct class *cls;
+
+struct sdesc {
+    struct shash_desc shash;
+    char ctx[];
+};
 
 static struct file_operations kernel_fops =
 {
@@ -213,12 +221,73 @@ static ssize_t device_write(struct file *filp,
     printk(KERN_INFO "Type of hash received: \n%s\n", lines[1]);
 
     // hash the original sentence received - lines[0]
-    //printk(KERN_INFO "Hash calculated: \n%s\n", get_hash(lines[2], lines[0]));
+    printk(KERN_INFO "Hash calculated in Kernel: \n%s\n", get_hash(lines[1], lines[0]));
 
     msg_Ptr = msg;
     return len;
 }
 
+static struct sdesc *init_sdesc(struct crypto_shash *alg)
+{
+    struct sdesc *sdesc;
+    int size;
+
+    size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
+    sdesc = kmalloc(size, GFP_KERNEL);
+    if (!sdesc)
+        return ERR_PTR(-ENOMEM);
+    sdesc->shash.tfm = alg;
+    return sdesc;
+}
+
+static int calc_hash(struct crypto_shash *alg,
+                const unsigned char *data, unsigned int datalen,
+                unsigned char *digest)
+{
+    struct sdesc *sdesc;
+    int ret;
+
+    sdesc = init_sdesc(alg);
+    if (IS_ERR(sdesc))
+        return PTR_ERR(sdesc);
+
+    ret = crypto_shash_digest(&sdesc->shash, data, datalen, digest);
+    kfree(sdesc);
+    return ret;
+}
+
+
+char *get_hash(char *hash_type, char *original_sentence)
+{
+    struct crypto_shash *alg;
+    char *hash_alg_name = "sha256";
+    unsigned int data_len = strlen(original_sentence) - 1; 
+    unsigned char *hashed_sentence;
+
+    alg = crypto_alloc_shash(hash_alg_name, 0, 0);
+    if (IS_ERR(alg)) {
+        printk(KERN_ERR "Can't allocate hash algorithm %s\n", hash_type);
+        return PTR_ERR(alg);
+    }
+
+    hashed_sentence = kmalloc(crypto_shash_digestsize(alg), GFP_KERNEL);
+    if (!hashed_sentence) {
+        printk(KERN_ERR "Unable to allocate digest\n");
+        return NULL;
+    }
+
+    calc_hash(alg, original_sentence, data_len, hashed_sentence);
+
+    crypto_free_shash(alg);
+    printk(KERN_INFO "HASH(%s, %i): %02x%02x%02x%02x%02x%02x%02x%02x\n",
+            hash_alg_name, data_len,
+            hashed_sentence[0], hashed_sentence[1], hashed_sentence[2],
+            hashed_sentence[3], hashed_sentence[4], hashed_sentence[5],
+            hashed_sentence[6], hashed_sentence[7]);
+
+
+    return hashed_sentence;
+}
 /*char* get_hash(char *hash_alg, char *input_string) {
     struct crypto_shash* algorithm;
     struct shash_desc* desc;
