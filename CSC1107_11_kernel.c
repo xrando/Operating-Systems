@@ -197,6 +197,12 @@ static ssize_t device_write(struct file *filp,
                             size_t len,
                             loff_t * off)
 {
+    char *hash;
+    int digest_size;
+
+    char *hash_received;
+    int hash_received_size;
+
     if (len > sizeof(msg) - 1)
         len = sizeof(msg) - 1;
 
@@ -216,12 +222,33 @@ static ssize_t device_write(struct file *filp,
         }
         lines[l_count++] = line;
     }
+
     printk(KERN_INFO "Original sentence received: \n%s\n", lines[0]);
-    printk(KERN_INFO "Hashed sentence received: \n%s\n", lines[2]);
+
+    /* Printing the hash received */
+    hash_received = lines[2];
+    hash_received_size = strlen(hash_received);
+
+    printk(KERN_INFO "Hashed sentence received: \n");
+    for (int i = 0; i < hash_received_size; i++)
+    {
+        printk(KERN_CONT "%02x", hash_received[i]);
+    }
+    printk(KERN_CONT "\n");
+
+    /* Printing the type of hash received */
     printk(KERN_INFO "Type of hash received: \n%s\n", lines[1]);
 
     // hash the original sentence received - lines[0]
-    printk(KERN_INFO "Hash calculated in Kernel: \n%s\n", get_hash(lines[1], lines[0]));
+    hash = get_hash(lines[1], lines[0]);
+    digest_size = strlen(hash);
+
+    printk(KERN_INFO "Hash calculated in Kernel:\n");
+    for (int i = 0; i < digest_size; i++)
+    {
+        printk(KERN_CONT "%02x", hash[i]);
+    }
+    printk(KERN_CONT "\n");
 
     msg_Ptr = msg;
     return len;
@@ -260,15 +287,49 @@ static int calc_hash(struct crypto_shash *alg,
 char *get_hash(char *hash_type, char *original_sentence)
 {
     struct crypto_shash *alg;
-    char *hash_alg_name = "sha256";
-    unsigned int data_len = strlen(original_sentence) - 1; 
+    char *hash_alg_name;
+    unsigned int data_len = strlen(original_sentence);
     unsigned char *hashed_sentence;
+    unsigned int digest_size;
+
+    printk(KERN_INFO "Hash type: %s\n", hash_type);
+
+    // Strip hash_type of any special characters
+    hash_type = strsep(&hash_type, "\n");
+    
+    if (strcmp(hash_type, "MD5") == 0)
+    {
+        hash_alg_name = "md5";
+    }
+    else if (strcmp(hash_type, "SHA1") == 0)
+    {
+        hash_alg_name = "sha1";
+    }
+    else if (strcmp(hash_type, "SHA256") == 0)
+    {
+        hash_alg_name = "sha256";
+    }
+    else if (strcmp(hash_type, "SHA384") == 0)
+    {
+        hash_alg_name = "sha384";
+    }
+    else if (strcmp(hash_type, "SHA512") == 0)
+    {
+        hash_alg_name = "sha512";
+    }
+    else
+    {
+        printk(KERN_ERR "Invalid hash type\n");
+        return NULL;
+    }
 
     alg = crypto_alloc_shash(hash_alg_name, 0, 0);
     if (IS_ERR(alg)) {
         printk(KERN_ERR "Can't allocate hash algorithm %s\n", hash_type);
-        return PTR_ERR(alg);
+        return NULL;
     }
+
+    digest_size = crypto_shash_digestsize(alg);
 
     hashed_sentence = kmalloc(crypto_shash_digestsize(alg), GFP_KERNEL);
     if (!hashed_sentence) {
@@ -279,13 +340,14 @@ char *get_hash(char *hash_type, char *original_sentence)
     calc_hash(alg, original_sentence, data_len, hashed_sentence);
 
     crypto_free_shash(alg);
-    printk(KERN_INFO "HASH(%s, %i): %02x%02x%02x%02x%02x%02x%02x%02x\n",
-            hash_alg_name, data_len,
-            hashed_sentence[0], hashed_sentence[1], hashed_sentence[2],
-            hashed_sentence[3], hashed_sentence[4], hashed_sentence[5],
-            hashed_sentence[6], hashed_sentence[7]);
 
+    // printk(KERN_INFO "HASH(%s, %i): ", hash_alg_name, data_len);
+    // for (int i = 0; i < digest_size; i++)
+    //     printk("%02x", hashed_sentence[i]);
 
+    hashed_sentence[digest_size] = '\0';
+
+    kfree(hashed_sentence);
     return hashed_sentence;
 }
 /*char* get_hash(char *hash_alg, char *input_string) {
