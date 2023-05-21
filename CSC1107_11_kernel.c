@@ -29,7 +29,10 @@ static ssize_t device_read(struct file *, char *, size_t, loff_t *);
 static ssize_t device_write(struct file *, const char *, size_t, loff_t *);
 char *get_hash(char *hash_type, char *original_sentence);
 static struct sdesc *init_sdesc(struct crypto_shash *alg);
-static int calc_hash(struct crypto_shash *alg, const unsigned char *data, unsigned int datalen, unsigned char *digest);
+static int calc_hash(struct crypto_shash *alg, 
+        const unsigned char *data, unsigned int datalen, unsigned char *digest);
+int compare_hashes(const char* received_hash_str, 
+        const unsigned char* computed_hash, size_t hash_size);
 
 #define SUCCESS 0
 #define DEVICE_NAME "CSC1107_11_kernel"   /* Dev name as it appears in /proc/devices   */
@@ -233,57 +236,93 @@ static ssize_t device_write(struct file *filp,
     hash_received = lines[2];
     printk(KERN_INFO "Hashed sentence received: %s\n", hash_received);
 
-    // hash the original sentence received - lines[0]
+    /* Calculating the hash in kernel */
     hash = get_hash(lines[1], lines[0]);
+
+    /* Getting the size of the hash calculated in kernel for comparison */
     digest_size = strlen(hash);
 
     printk(KERN_INFO "Hash calculated in Kernel: ");
 
+    /* Printing the hash calculated in kernel by converting it to a hex string */
     for (int i = 0; i < digest_size; i++)
     {
         printk(KERN_CONT "%02x", hash[i]);
     }
     printk(KERN_CONT "\n");
 
-
-    //TODO: String Compare is not working yet.
-    /* Comparing the hash received with the hash calculated in kernel */
-    strcmp(hash_received, hash) == 0 ? printk(KERN_INFO "Hashes match!\n") : printk(KERN_INFO "Hashes don't match!\n");
+    /* 
+     * Comparing the hash received and the hash calculated in kernel 
+     * This is done by comparing the size of the hashes and 
+     * then comparing the hashes themselves
+     */
+    if (strlen(hash_received) == 2 * digest_size && 
+            compare_hashes(hash_received, hash, digest_size) == 0)
+    {
+        printk(KERN_INFO "Hashes match!\n");
+    }
+    else
+    {
+        printk(KERN_INFO "Hashes don't match!\n");
+    }
 
     msg_Ptr = msg;
     return len;
 }
 
+/*
+ * This function is called to initialize the sdesc struct, which is used to
+ * calculate the hash of the message
+ */
 static struct sdesc *init_sdesc(struct crypto_shash *alg)
 {
-    struct sdesc *sdesc;
-    int size;
+    /* sdesc is a struct that contains the shash struct */
+    struct sdesc *sdesc;                                        
+    int size;                                                 
 
+    /* Calculate the size of the sdesc struct */
     size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
+
+    /*  Allocate memory for the sdesc struct */
     sdesc = kmalloc(size, GFP_KERNEL);
     if (!sdesc)
         return ERR_PTR(-ENOMEM);
+
+    /* Initialize the shash struct */
     sdesc->shash.tfm = alg;
     return sdesc;
 }
 
+/*
+ * This function is called to calculate the hash of the message
+ */
 static int calc_hash(struct crypto_shash *alg,
-                const unsigned char *data, unsigned int datalen,
-                unsigned char *digest)
+                    const unsigned char *data, 
+                    unsigned int datalen,
+                    unsigned char *digest)
 {
+    /* sdesc is a struct that contains the shash struct */
     struct sdesc *sdesc;
     int ret;
 
+    /* Initialize the sdesc struct and check for errors */
     sdesc = init_sdesc(alg);
     if (IS_ERR(sdesc))
         return PTR_ERR(sdesc);
 
-    ret = crypto_shash_digest(&sdesc->shash, data, datalen, digest);
+    /* Calculate the hash and check for errors with the crypto_shash_digest function */
+    ret = crypto_shash_digest(&sdesc->shash, data, datalen, digest); 
+
+    /* Free the memory allocated for the sdesc struct */
     kfree(sdesc);
     return ret;
 }
 
 
+/*
+ * This function is called to compute the hash of the original sentence
+ * and compare it with the hash received from the user space
+ */
 char *get_hash(char *hash_type, char *original_sentence)
 {
     struct crypto_shash *alg;
@@ -294,9 +333,10 @@ char *get_hash(char *hash_type, char *original_sentence)
 
     //printk(KERN_INFO "Hash type: %s\n", hash_type);
 
-    // Strip hash_type of any special characters
+    /* Strip the \n from the hash type */
     hash_type = strsep(&hash_type, "\n");
     
+    /* Check the hash type */
     if (strcmp(hash_type, "MD5") == 0)
     {
         hash_alg_name = "md5";
@@ -323,32 +363,66 @@ char *get_hash(char *hash_type, char *original_sentence)
         return NULL;
     }
 
+    /* Allocate memory for the hash algorithm */
     alg = crypto_alloc_shash(hash_alg_name, 0, 0);
+
     if (IS_ERR(alg)) {
         printk(KERN_ERR "Can't allocate hash algorithm %s\n", hash_type);
         return NULL;
     }
 
+    /* Get the size of the used hash algorithm */
     digest_size = crypto_shash_digestsize(alg);
 
+    /* Allocate memory for the hash */
     hashed_sentence = kmalloc(crypto_shash_digestsize(alg), GFP_KERNEL);
     if (!hashed_sentence) {
         printk(KERN_ERR "Unable to allocate digest\n");
         return NULL;
     }
 
+    /* Calculate the hash of the original sentence */
     calc_hash(alg, original_sentence, data_len, hashed_sentence);
 
+    /* Free the memory allocated for the hash algorithm */
     crypto_free_shash(alg);
-
-    // printk(KERN_INFO "HASH(%s, %i): ", hash_alg_name, data_len);
-    // for (int i = 0; i < digest_size; i++)
-    //     printk("%02x", hashed_sentence[i]);
 
     hashed_sentence[digest_size] = '\0';
 
-    kfree(hashed_sentence);
+    /* Free the memory allocated for the hash */
+    kfree(hashed_sentence);                     
     return hashed_sentence;
+}
+
+/*
+ * This function is called to compare the hash received from the user space
+ * with the hash computed in the kernel
+ */
+int compare_hashes(const char* received_hash_str, 
+                const unsigned char* computed_hash, 
+                size_t hash_size)
+{
+    int result = -1;
+    /* Allocate memory for the received hash and check if the allocation was successful */
+    unsigned char* received_hash = kmalloc(hash_size, GFP_KERNEL);
+    if (received_hash == NULL)
+    {
+        return -1;
+    }
+
+    /* Convert the received hash from hex to binary */
+    for (size_t i = 0; i < hash_size; i++)
+    {
+        sscanf(&received_hash_str[2 * i], "%2hhx", &received_hash[i]);
+    }
+
+    /* Compare the received hash with the computed hash */
+    result = memcmp(received_hash, computed_hash, hash_size);
+
+    /* Don't forget to free the memory */
+    kfree(received_hash);
+
+    return result;
 }
 /*char* get_hash(char *hash_alg, char *input_string) {
     struct crypto_shash* algorithm;
