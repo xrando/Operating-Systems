@@ -201,7 +201,6 @@ static ssize_t device_write(struct file *filp,
     int digest_size;
 
     char *hash_received;
-    int hash_received_size;
 
     if (len > sizeof(msg) - 1)
         len = sizeof(msg) - 1;
@@ -223,32 +222,33 @@ static ssize_t device_write(struct file *filp,
         lines[l_count++] = line;
     }
 
-    printk(KERN_INFO "Original sentence received: \n%s\n", lines[0]);
-
-    /* Printing the hash received */
-    hash_received = lines[2];
-    hash_received_size = strlen(hash_received);
-
-    printk(KERN_INFO "Hashed sentence received: \n");
-    for (int i = 0; i < hash_received_size; i++)
-    {
-        printk(KERN_CONT "%02x", hash_received[i]);
-    }
-    printk(KERN_CONT "\n");
+    /* Printing the original sentence received */
+    printk(KERN_INFO "Original sentence received: %s\n", lines[0]);
 
     /* Printing the type of hash received */
-    printk(KERN_INFO "Type of hash received: \n%s\n", lines[1]);
+    // TODO: Hash is not being received in full
+    printk(KERN_INFO "Type of hash received: %s\n", lines[1]);
+
+    /* Printing the hash received until the first \n */
+    hash_received = lines[2];
+    printk(KERN_INFO "Hashed sentence received: %s\n", hash_received);
 
     // hash the original sentence received - lines[0]
     hash = get_hash(lines[1], lines[0]);
     digest_size = strlen(hash);
 
-    printk(KERN_INFO "Hash calculated in Kernel:\n");
+    printk(KERN_INFO "Hash calculated in Kernel: ");
+
     for (int i = 0; i < digest_size; i++)
     {
         printk(KERN_CONT "%02x", hash[i]);
     }
     printk(KERN_CONT "\n");
+
+
+    //TODO: String Compare is not working yet.
+    /* Comparing the hash received with the hash calculated in kernel */
+    strcmp(hash_received, hash) == 0 ? printk(KERN_INFO "Hashes match!\n") : printk(KERN_INFO "Hashes don't match!\n");
 
     msg_Ptr = msg;
     return len;
@@ -292,7 +292,7 @@ char *get_hash(char *hash_type, char *original_sentence)
     unsigned char *hashed_sentence;
     unsigned int digest_size;
 
-    printk(KERN_INFO "Hash type: %s\n", hash_type);
+    //printk(KERN_INFO "Hash type: %s\n", hash_type);
 
     // Strip hash_type of any special characters
     hash_type = strsep(&hash_type, "\n");
