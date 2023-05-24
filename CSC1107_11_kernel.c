@@ -45,7 +45,7 @@ int compare_hashes(const char* received_hash_str,
 static int Major;               /* Major number assigned to our device driver */
 static int Device_Open = 0;     /* Is device open?
                                  * Used to prevent multiple access to device */
-static char msg[BUF_LEN] ="";       /* The msg the device will give when asked */
+static char msg[BUF_LEN] = "";       /* The msg the device will give when asked */
 static char *msg_Ptr;
 
 static char *lines[3];
@@ -228,7 +228,6 @@ static ssize_t device_write(struct file *filp,
     printk(KERN_INFO "Original sentence received: %s\n", lines[0]);
 
     /* Printing the type of hash received */
-    // TODO: Hash is not being received in full
     printk(KERN_INFO "Type of hash received: %s\n", lines[1]);
 
     /* Printing the hash received until the first \n */
@@ -238,8 +237,16 @@ static ssize_t device_write(struct file *filp,
     /* Calculating the hash in kernel */
     hash = get_hash(lines[1], lines[0]);
 
+    if (!hash)
+    {
+        printk(KERN_INFO "Error calculating hash\n");
+        return -1;
+    }
+
     /* Getting the size of the hash calculated in kernel for comparison */
     digest_size = strlen(hash);
+
+    hash[digest_size] = '\0';
 
     printk(KERN_INFO "Hash calculated in Kernel: ");
 
@@ -256,16 +263,20 @@ static ssize_t device_write(struct file *filp,
      * then comparing the hashes themselves
      */
     if (strlen(hash_received) == 2 * digest_size && 
-            compare_hashes(hash_received, hash, digest_size) == 0)
-    {
+            compare_hashes(hash_received, hash, digest_size) == 0) {
         printk(KERN_INFO "Hashes match!\n");
     }
-    else
-    {
+    else {
         printk(KERN_INFO "Hashes don't match!\n");
     }
 
     msg_Ptr = msg;
+
+    if (len < sizeof(msg))
+        memset(msg + len, 0, sizeof(msg) - len);
+
+    kfree(hash);
+
     return len;
 }
 
@@ -377,6 +388,7 @@ char *get_hash(char *hash_type, char *original_sentence)
     hashed_sentence = kmalloc(crypto_shash_digestsize(alg), GFP_KERNEL);
     if (!hashed_sentence) {
         printk(KERN_ERR "Unable to allocate digest\n");
+        crypto_free_shash(alg);
         return NULL;
     }
 
@@ -389,7 +401,7 @@ char *get_hash(char *hash_type, char *original_sentence)
     hashed_sentence[digest_size] = '\0';
 
     /* Free the memory allocated for the hash */
-    kfree(hashed_sentence);                     
+    /* kfree(hashed_sentence); */
     return hashed_sentence;
 }
 
