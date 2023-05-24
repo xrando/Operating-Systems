@@ -36,8 +36,7 @@ int compare_hashes(const char* received_hash_str,
 
 #define SUCCESS 0
 #define DEVICE_NAME "CSC1107_11_kernel"   /* Dev name as it appears in /proc/devices   */
-#define BUF_LEN 2048             /* Max length of the message from the device */
-#define HASH_MAX 2048
+#define BUF_LEN 4096             /* Max length of the message from the device */
 
 /*
  * Global variables are declared as static, so are global within the file.
@@ -46,7 +45,7 @@ int compare_hashes(const char* received_hash_str,
 static int Major;               /* Major number assigned to our device driver */
 static int Device_Open = 0;     /* Is device open?
                                  * Used to prevent multiple access to device */
-static char msg[BUF_LEN];       /* The msg the device will give when asked */
+static char msg[BUF_LEN] ="";       /* The msg the device will give when asked */
 static char *msg_Ptr;
 
 static char *lines[3];
@@ -202,7 +201,6 @@ static ssize_t device_write(struct file *filp,
 {
     char *hash;
     int digest_size;
-
     char *hash_received;
 
     if (len > sizeof(msg) - 1)
@@ -212,7 +210,7 @@ static ssize_t device_write(struct file *filp,
     msg[len] = '\0';   // Ensure the message is null-terminated
 
     // kernel message
-    printk(KERN_INFO "Data written to device:\n%s\n", msg);
+    //printk(KERN_INFO "Data written to device:\n%s\n", msg);
 
 
     temp = msg;
