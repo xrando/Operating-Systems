@@ -10,13 +10,14 @@
 
 #define DEVICE "/dev/CSC1107_11_kernel"
 #define TIME_BUFF_SIZE 256
+#define BUF_SIZE 2048
 
 char* getDataTime();
 char* get_hash(const EVP_MD *type, char *msg);
 
 int main() {
     int i, fd;
-    char ch, write_buf[100], read_buf[100];
+    char ch, write_buf[BUF_SIZE], read_buf[BUF_SIZE];
     int hash_type = 0;
     char *hash_string;
     const char *type_string;
@@ -59,7 +60,7 @@ int main() {
     // 1. original sentence
     // 2. hashed sentence
     // 3. type of hash
-    snprintf(write_buf, 100, "%s\n%s\n%s", dateTime, type_string, hash_string);
+    snprintf(write_buf, BUF_SIZE, "%s;%s;%s", dateTime, type_string, hash_string);
 
     free(hash_string);
     fd = open(DEVICE, O_RDWR);

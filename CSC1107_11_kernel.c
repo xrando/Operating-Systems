@@ -36,8 +36,8 @@ int compare_hashes(const char* received_hash_str,
 
 #define SUCCESS 0
 #define DEVICE_NAME "CSC1107_11_kernel"   /* Dev name as it appears in /proc/devices   */
-#define BUF_LEN 100              /* Max length of the message from the device */
-#define HASH_MAX 64
+#define BUF_LEN 2048             /* Max length of the message from the device */
+#define HASH_MAX 2048
 
 /*
  * Global variables are declared as static, so are global within the file.
@@ -53,7 +53,7 @@ static char *lines[3];
 static int l_count = 0;
 static char *temp;
 static char *line;
-static const char *delimiter = "\n";
+static const char *delimiter = ";";
 
 static struct class *cls;
 
@@ -212,10 +212,11 @@ static ssize_t device_write(struct file *filp,
     msg[len] = '\0';   // Ensure the message is null-terminated
 
     // kernel message
-    //printk(KERN_INFO "Data written to device:\n %s\n", msg);
+    printk(KERN_INFO "Data written to device:\n%s\n", msg);
 
 
     temp = msg;
+    l_count = 0;
     while ((line = strsep(&temp, delimiter)) != NULL)
     {
         if (l_count >= 3)
@@ -334,7 +335,7 @@ char *get_hash(char *hash_type, char *original_sentence)
     //printk(KERN_INFO "Hash type: %s\n", hash_type);
 
     /* Strip the \n from the hash type */
-    hash_type = strsep(&hash_type, "\n");
+    //hash_type = strsep(&hash_type, "\n");
     
     /* Check the hash type */
     if (strcmp(hash_type, "MD5") == 0)
