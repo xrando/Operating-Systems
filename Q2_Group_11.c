@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
 
 int generateRandomNumber(int, int);
+void generateRandomArray(int numbers[], int size, int min, int max, int maxDuplicates);
 void displayHeader();
 void displayFooter();
 //void displayTable(int [],int [],int [],int [],int);
-void firstComeFirstServeScheduling(int[],int,int[]);
+void firstComeFirstServeScheduling();
 void shortestJobFirst();
-void shortestRemainingTimeFirst(int processes[][3], int);
-void roundRobinScheduling(int processes[], int, int bt[], int);
+void shortestRemainingTimeFirst();
+void roundRobinScheduling();
 void priorityScheduling();
 
 
@@ -23,15 +25,76 @@ int generateRandomNumber(int min, int max)
     return randomNumber;
 }
 
+
+/* void generateRandomArray(int numbers[], int size, int min, int max, int maxDuplicates) {
+    if (size <= 0 || maxDuplicates <= 0 || maxDuplicates >= size || min > max) {
+        printf("Invalid input parameters.\n");
+        return;
+    }
+
+    srand(time(NULL));
+    int count = 0;
+    int frequency[max - min + 1];
+
+    // Initialize frequency array to 0
+    for (int i = 0; i < max - min + 1; i++) {
+        frequency[i] = 0;
+    }
+    while (count < size) {
+        int number = (rand() % (max - min)) + min; // Generate a random number within the range
+
+        if (frequency[number - min] < maxDuplicates) {
+            numbers[count] = number;
+            frequency[number - min]++;
+            count++;
+        }
+    }
+} */
+
+
+void generateRandomArray(int numbers[], int size, int min, int max, int maxDuplicates) {
+    if (size <= 0 || maxDuplicates <= 0 || maxDuplicates >= size || min > max) {
+        printf("Invalid input parameters.\n");
+        return;
+    }
+
+    srand(time(NULL));
+    int count = 0;
+    int frequency[max - min + 1];
+
+    // Initialize frequency array to 0
+    for (int i = 0; i < max - min + 1; i++) {
+        frequency[i] = 0;
+    }
+
+    // Check if min is 0 and generate at least one 0
+    if (min == 0) {
+        numbers[count] = 0;
+        frequency[0 - min]++;
+        count++;
+    }
+
+    while (count < size) {
+        int number = (rand() % (max - min + 1)) + min; // Generate a random number within the range
+
+        if (number != 0 && frequency[number - min] < maxDuplicates) {
+            numbers[count] = number;
+            frequency[number - min]++;
+            count++;
+        }
+    }
+}
+
+
 void displayHeader()
 {
-    printf("╔═══════════╦═══════════╦═══════════════╦═════════════════╗\n");
-    printf("║ Processes ║ Burst time║ Waiting time  ║ Turnaround time ║\n");
-    printf("╠═══════════╬═══════════╬═══════════════╬═════════════════╣\n");
+    printf("╔═══════════╦═════════════╦═══════════════╦═════════════════╗\n");
+    printf("║ Processes ║ Arrival time║  Burst time   ║    Priority     ║\n");
+    printf("╠═══════════╬═════════════╬═══════════════╬═════════════════╣\n");
 }
 void displayFooter()
 {
-    printf("╚═══════════╩═══════════╩═══════════════╩═════════════════╝\n");
+    printf("╚═══════════╩═════════════╩═══════════════╩═════════════════╝\n");
 }
 /* void displayTable(int processes[], int bt[], int wt[], int tat[], int n) {
     int total_wt = 0, total_tat = 0;
@@ -51,299 +114,424 @@ void displayFooter()
 } */
 
 //First come first serve
-void firstComeFirstServeScheduling(int processes[], int n, int bt[]) 
-{
-    int wt[n], tat[n], total_wt = 0, total_tat = 0;
+void firstComeFirstServeScheduling() {
+    int i, j, temp = 0, ct[10], tat[10], wt[10], at[10], bt[10],priority[10], n=6;
+    int processes[6] = {1,2,3,4,5,6};
+    float awt = 0, atat = 0;
 
-    // Waiting time for the first process is 0
-    wt[0] = 0;
+    generateRandomArray(at, 6, 0, 8, 3);
+    generateRandomArray(bt, 6, 3, 10, 3);
+    generateRandomArray(priority, 6, 1, 4, 2);
 
-    // Calculating waiting time
-    for (int i = 1; i < n; i++)
-        wt[i] = bt[i - 1] + wt[i - 1];
-
-    // Calculating turnaround time by adding bt[i] + wt[i]
-    for (int i = 0; i < n; i++)
-        tat[i] = bt[i] + wt[i];
-
-    displayHeader();
-    for (int i = 0; i < n; i++) {
-        printf("║    P%2d    ║     %2d    ║      %2d       ║       %2d        ║\n",
-               processes[i], bt[i], wt[i], tat[i]);
-        total_wt += wt[i];
-        total_tat += tat[i];
-    }
-    displayFooter();
-    int avg_wt = (float)total_wt / (float)n;
-    int avg_tat = (float)total_tat / (float)n;
-    printf("Average waiting time = %d\n", avg_wt);
-    printf("Average turnaround time = %d\n", avg_tat);
-}
-
-//Shortest job first
-void shortestJobFirst() 
-{
-    int A[100][4];
-    int i, j, n, total = 0, index, temp;
-    float avg_wt, avg_tat;
-    printf("Enter number of processes: ");
-    scanf("%d", &n);
-    printf("Enter Burst Time:\n");
+    // Sorting the processes based on arrival time
     for (i = 0; i < n; i++) {
-        printf("Process %d: ", i + 1);
-        scanf("%d", &A[i][1]);
-        A[i][0] = i + 1;
-    }
-    for (i = 0; i < n; i++) {
-        index = i;
-        for (j = i + 1; j < n; j++)
-            if (A[j][1] < A[index][1])
-                index = j;
-        temp = A[i][1];
-        A[i][1] = A[index][1];
-        A[index][1] = temp;
+        for (j = 0; j < (n - i - 1); j++) {
+            if (at[j] > at[j + 1]) {
+                temp = processes[j + 1];
+                processes[j + 1] = processes[j];
+                processes[j] = temp;
 
-        temp = A[i][0];
-        A[i][0] = A[index][0];
-        A[index][0] = temp;
+                temp = at[j + 1];
+                at[j + 1] = at[j];
+                at[j] = temp;
+
+                temp = bt[j + 1];
+                bt[j + 1] = bt[j];
+                bt[j] = temp;
+
+                temp = priority[j + 1];
+                priority[j + 1] = priority[j];
+                priority[j] = temp;
+            }
+        }
     }
-    A[0][2] = 0;
+
+    // Calculating completion time
+    ct[0] = at[0] + bt[0];
     for (i = 1; i < n; i++) {
-        A[i][2] = 0;
-        for (j = 0; j < i; j++)
-            A[i][2] += A[j][1];
-        total += A[i][2];
+        temp = 0; // Reset temp to 0 inside the loop
+        if (ct[i - 1] < at[i]) {
+            temp = at[i] - ct[i - 1];
+        }
+        ct[i] = ct[i - 1] + bt[i] + temp;
     }
-    avg_wt = (float)total / n;
-    total = 0;
-    printf("\n");
+
+    // Calculating turnaround time and waiting time
+    for (i = 0; i < n; i++) {
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+        atat += tat[i];
+        awt += wt[i];
+    }
+
     displayHeader();
-    for (i = 0; i < n; i++) 
-    {
-        A[i][3] = A[i][1] + A[i][2];
-        total += A[i][3];
-        printf("║    P%2d    ║     %2d    ║      %2d       ║       %2d        ║\n",
-               A[i][0], A[i][1], A[i][2], A[i][3]);
+    for (i = 0; i < n; i++) {
+        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               processes[i], at[i], bt[i], priority[i]);
     }
     displayFooter();
-    avg_tat = (float)total / n;
-    printf("Average Waiting Time= %f\n", avg_wt);
-    printf("Average Turnaround Time= %f\n", avg_tat);
-}
 
-//Shortest remaining time first
-void shortestRemainingTimeFirst(int processes[][3], int n) {
-    int wt[n], tat[n], rt[n];
+    atat = atat / n;
+    awt = awt / n;
+    printf("\nAverage turnaround time: %.3f\n", atat);
+    printf("Average waiting time: %.3f\n", awt);
+}
+//Shortest Job First
+void shortestJobFirst()
+{
+    int n = 6;
+    int bt[n], art[n], wt[n], tat[n],priority[n];
     int total_wt = 0, total_tat = 0;
 
-    // Copy the burst time into rt[]
-    for (int i = 0; i < n; i++) {
-        rt[i] = processes[i][1];
-    }
+    //populate array with random data
+    generateRandomArray(art, 6, 0, 8, 3);
+    generateRandomArray(bt, n, 3, 10, 3);
+    generateRandomArray(priority, n, 1, 4, 2);
+    // Calculate waiting time
+    int rt[n];
+    for (int i = 0; i < n; i++)
+        rt[i] = bt[i];
 
-    int complete = 0;
-    int t = 0;
-    int minm = 999999999;
-    int shortest = 0;
-    int check = 0;
+    int complete = 0, t = 0;
+    int shortest = -1, finish_time;
 
     // Process until all processes get completed
     while (complete != n) {
-        // Find process with minimum remaining time among the processes that arrives till the current time
+        shortest = -1;
+        int min_bt = INT_MAX;
+
+        // Find the process with the minimum remaining time
         for (int j = 0; j < n; j++) {
-            if (processes[j][2] <= t && rt[j] < minm && rt[j] > 0) {
-                minm = rt[j];
-                shortest = j;
-                check = 1;
+            if (art[j] <= t && rt[j] < min_bt && rt[j] > 0) {
+                if (art[j] == 0) {
+                    shortest = j;
+                    min_bt = rt[j];
+                    break;
+                }
+                if (shortest == -1 || rt[j] < rt[shortest]) {
+                    shortest = j;
+                    min_bt = rt[j];
+                }
             }
         }
 
-        if (check == 0) {
+        if (shortest == -1) {
             t++;
             continue;
         }
 
-        // Reduce remaining time by one
+        // Reduce the remaining time by one
         rt[shortest]--;
-
-        // Update minimum
-        minm = rt[shortest];
-        if (minm == 0) {
-            minm = 999999999;
-        }
 
         // If a process gets completely executed
         if (rt[shortest] == 0) {
             complete++;
-            check = 0;
 
-            // Find finish time of the current process
-            int fint = t + 1;
+            // Find the finish time of the current process
+            finish_time = t + 1;
 
-            // Calculate waiting time
-            wt[shortest] = fint - processes[shortest][1] - processes[shortest][2];
-
-            if (wt[shortest] < 0) {
+            // Calculate the waiting time
+            wt[shortest] = finish_time - bt[shortest] - art[shortest];
+            if (wt[shortest] < 0)
                 wt[shortest] = 0;
-            }
-
-            // Calculating turnaround time
-            tat[shortest] = processes[shortest][1] + wt[shortest];
-
-            // Update total waiting time and total turn-around time
-            total_wt += wt[shortest];
-            total_tat += tat[shortest];
         }
 
         // Increment time
         t++;
     }
 
-    // Display results in table format
+    // Calculate turnaround time
+    for (int i = 0; i < n; i++)
+        tat[i] = bt[i] + wt[i];
+
+    // Display processes along with all details
     displayHeader();
     for (int i = 0; i < n; i++) {
-        printf("║    P%2d    ║     %2d    ║      %2d       ║       %2d        ║\n",
-               processes[i][0], processes[i][1], wt[i], tat[i]);
+        total_wt += wt[i];
+        total_tat += tat[i];
+        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               i+1, art[i], bt[i], priority[i]);
     }
     displayFooter();
-
-    printf("\nAverage waiting time = %.5f\n", (float)total_wt / n);
-    printf("Average turnaround time = %.5f\n", (float)total_tat / n);
+    // Calculate average waiting time and average turnaround time
+    float avg_wt = (float)total_wt / (float)n;
+    float avg_tat = (float)total_tat / (float)n;
+    printf("\nAverage turnaround time = %.3f", avg_tat);
+    printf("\nAverage waiting time = %.3f\n", avg_wt);
 }
-
-//Round robin scheduling
-void roundRobinScheduling(int processes[], int n, int bt[], int quantum) 
+//Shortest remaining time first
+void shortestRemainingTimeFirst()
 {
-	int wt[n], tat[n];
-	int rem_bt[n], t = 0, done = 0;
+    int arrival_time[10], burst_time[10], temp[10], priority[10];
+    int i, smallest, count = 0, time, limit=6;
+    double wait_time = 0, turnaround_time = 0, end;
+    float average_waiting_time, average_turnaround_time;
+    //populate arrays with random data
+    generateRandomArray(arrival_time, 6, 0, 8, 3);
+    generateRandomArray(burst_time, 6, 3, 10, 3);
+    generateRandomArray(priority, 6, 1, 4, 2);
+    for(i=0;i<limit;i++)
+    {
+        temp[i] = burst_time[i];
+    }
 
-	// Copy the burst time into rem_bt[]
-	for (int i = 0; i < n; i++) {
-		rem_bt[i] = bt[i];
-	}
+    burst_time[9] = 9999;
 
-	// Keep traversing processes in round-robin manner until all of them are not done.
-	while (1) {
-		done = 1;
-		// Traverse all processes one by one repeatedly
-		for (int i = 0; i < n; i++) {
-			// If burst time of a process is greater than 0, process further
-			if (rem_bt[i] > 0) {
-				done = 0; // There is a pending process
+    for (time = 0; count != limit; time++)
+    {
+        smallest = 9;
+        for (i = 0; i < limit; i++)
+        {
+            if (arrival_time[i] <= time && burst_time[i] < burst_time[smallest] && burst_time[i] > 0)
+            {
+                smallest = i;
+            }
+        }
+        burst_time[smallest]--;
+        if (burst_time[smallest] == 0)
+        {
+            count++;
+            end = time + 1;
+            wait_time = wait_time + end - arrival_time[smallest] - temp[smallest];
+            turnaround_time = turnaround_time + end - arrival_time[smallest];
+        }
+    }
 
-				if (rem_bt[i] > quantum) {
-					t += quantum; // Increase the value of t i.e. shows how much time a process has been processed
-					rem_bt[i] -= quantum; // Decrease the burst_time of the current process by quantum
-				}
-				else {
-					t += rem_bt[i]; // Increase the value of t i.e. shows how much time a process has been processed
-					wt[i] = t - bt[i]; // Waiting time is current time minus time used by this process
-					rem_bt[i] = 0; // As the process gets fully executed, make its remaining burst time = 0
-				}
-			}
-		}
-
-		// If all processes are done, break the loop
-		if (done == 1) {
-			break;
-		}
-	}
-
-	// Calculating turnaround time
-	for (int i = 0; i < n; i++) {
-		tat[i] = bt[i] + wt[i];
-	}
-
-	// Display processes along with all details
-	double total_wt = 0, total_tat = 0;
+    average_waiting_time = wait_time / limit;
+    average_turnaround_time = turnaround_time / limit;
     displayHeader();
-	for (int i = 0; i < n; i++) {
-		total_wt += wt[i];
-		total_tat += tat[i];
-		printf("║    P%2d    ║     %2d    ║      %2d       ║       %2d        ║\n",
-         processes[i], bt[i], wt[i], tat[i]);
-	}
+    for (i = 0; i < limit; i++) {
+        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               i+1, arrival_time[i], temp[i], priority[i]);
+    }
     displayFooter();
-	printf("\nAverage waiting time = %.5f\n", total_wt / n);
-	printf("Average turn around time = %.5f\n", total_tat / n);
+    printf("Average Turnaround Time: %.3f", average_turnaround_time);
+    printf("\nAverage Waiting Time: %.3f\n", average_waiting_time);
+
 }
 
-//Priority scheduling
+//Round robin (only works for arrival time = 0)
+void roundRobinScheduling() 
+{
+    // Input no of processed
+    int n=6;
+    int wait_time = 0, ta_time = 0, arr_time[n], burst_time[n], temp_burst_time[n], time_slot=2, priority[n];
+    int x = n;
+
+    //populate arrays with random data
+    //generateRandomArray(arr_time, 6, 0, 8, 3);
+    generateRandomArray(burst_time, 6, 3, 10, 3);
+    generateRandomArray(priority, 6, 1, 4, 2);
+
+    // Input details of processes
+    for(int i = 0; i < n; i++)
+    {
+        arr_time[i]=0;
+        temp_burst_time[i] = burst_time[i];
+    }
+    // Total indicates total time
+    // Counter indicates which process is executed
+    int total = 0, counter = 0, i;
+    displayHeader();
+    for(total = 0, i = 0; x != 0; )
+    {
+        // Define the conditions
+        if(temp_burst_time[i] <= time_slot && temp_burst_time[i] > 0)
+        {
+            total = total + temp_burst_time[i];
+            temp_burst_time[i] = 0;
+            counter = 1;
+        }
+        else if(temp_burst_time[i] > 0)
+        {
+            temp_burst_time[i] = temp_burst_time[i] - time_slot;
+            total += time_slot;
+        }
+        if(temp_burst_time[i] == 0 && counter == 1)
+        {
+            x--; // Decrement the process no.
+            printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               i+1, arr_time[i], burst_time[i], priority[i]);
+            wait_time = wait_time + total - arr_time[i] - burst_time[i];
+            ta_time += total - arr_time[i];
+            counter = 0;
+        }
+        if(i == n - 1)
+        {
+            i = 0;
+        }
+        else if(arr_time[i + 1] <= total)
+        {
+            i++;
+        }
+        else
+        {
+            i = 0;
+        }
+    }
+    displayFooter();
+    float average_wait_time = wait_time * 1.0 / n;
+    float average_turnaround_time = ta_time * 1.0 / n;
+    printf("\nAvg Turnaround Time:%.3f", average_turnaround_time);
+    printf("\nAverage Waiting Time:%.3f\n", average_wait_time);
+}
+//TODO:FIX
 void priorityScheduling()
 {
-    int bt[20], p[20], wt[20], tat[20], pr[20], i, j, n, total = 0, pos, temp, avg_wt, avg_tat;
-    
-    printf("Enter Total Number of Processes:");
-    scanf("%d", &n);
-    
-    printf("\nEnter Burst Time and Priority\n");
-    for (i = 0; i < n; i++)
-    {
-        printf("\nP[%d]\n", i + 1);
-        printf("Burst Time:");
-        scanf("%d", &bt[i]);
-        printf("Priority:");
-        scanf("%d", &pr[i]);
-        p[i] = i + 1; // contains process number
+    int n = 6, i;
+    int arrivalTime[10];
+    int burstTime[10];
+    int priority[10];
+    int temp[10];
+    int time = 0;
+    int count = 0;
+    int shortestProcess;
+    float totalWaitingTime = 0;
+    float totalTurnaroundTime = 0;
+    float averageWaitingTime, averageTurnaroundTime;
+
+    //populate array with random data
+    generateRandomArray(arrivalTime, 6, 0, 8, 3);
+    generateRandomArray(burstTime, n, 3, 10, 3);
+    generateRandomArray(priority, n, 1, 4, 2);
+
+    for (i = 0; i < n; i++) {
+        //arrivalTime[i] = 0;
+        temp[i] = burstTime[i]; // adding a duplicate of the burst time to a temporary array
     }
-    
-    // Sorting burst time, priority, and process number in ascending order using selection sort
-    for (i = 0; i < n; i++)
-    {
-        pos = i;
-        for (j = i + 1; j < n; j++)
-        {
-            if (pr[j] < pr[pos])
-                pos = j;
+
+    // Check if there is a process with arrival time 0
+    int process_with_arrival_0 = -1;
+    for (i = 0; i < n; i++) {
+        if (arrivalTime[i] == 0) {
+            process_with_arrival_0 = i;
+            break;
         }
-        
-        temp = pr[i];
-        pr[i] = pr[pos];
-        pr[pos] = temp;
-        
-        temp = bt[i];
-        bt[i] = bt[pos];
-        bt[pos] = temp;
-        
-        temp = p[i];
-        p[i] = p[pos];
-        p[pos] = temp;
     }
-    
-    wt[0] = 0; // Waiting time for the first process is zero
-    
-    // Calculate waiting time
-    for (i = 1; i < n; i++)
-    {
-        wt[i] = 0;
-        for (j = 0; j < i; j++)
-            wt[i] += bt[j];
-        total += wt[i];
+
+    // Execute process with arrival time 0 first
+    if (process_with_arrival_0 != -1) {
+        shortestProcess = process_with_arrival_0;
+        burstTime[shortestProcess]--;
+
+        if (burstTime[shortestProcess] == 0) {
+            count++;
+
+            int waitingTime = time + 1 - arrivalTime[shortestProcess] - temp[shortestProcess];
+            int turnaroundTime = time + 1 - arrivalTime[shortestProcess];
+
+            totalWaitingTime += waitingTime;
+            totalTurnaroundTime += turnaroundTime;
+        }
+
+        time++;
     }
-    
-    avg_wt = total / n; // Average waiting time
-    total = 0;
-    
+
+    // Scheduling algorithm
+    while (count != n) {
+        shortestProcess = -1;
+        for (i = 0; i < n; i++) {
+            if (burstTime[i] > 0 && arrivalTime[i] <= time && (shortestProcess == -1 || priority[i] < priority[shortestProcess])) {
+                shortestProcess = i;
+            }
+        }
+
+        if (shortestProcess != -1) {
+            burstTime[shortestProcess]--;
+
+            if (burstTime[shortestProcess] == 0) {
+                count++;
+
+                int waitingTime = time + 1 - arrivalTime[shortestProcess] - temp[shortestProcess];
+                int turnaroundTime = time + 1 - arrivalTime[shortestProcess];
+
+                totalWaitingTime += waitingTime;
+                totalTurnaroundTime += turnaroundTime;
+            }
+        }
+
+        time++;
+    }
+
+    averageWaitingTime = totalWaitingTime / n;
+    averageTurnaroundTime = totalTurnaroundTime / n;
     displayHeader();
-    
-    for (i = 0; i < n; i++)
-    {
-        tat[i] = bt[i] + wt[i]; // Calculate turnaround time
-        total += tat[i];
-        printf("║    P%2d    ║     %2d    ║      %2d       ║       %2d        ║\n",
-         p[i], bt[i], wt[i], tat[i]);
+    for (i = 0; i < n; i++) {
+        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               i + 1, arrivalTime[i], temp[i], priority[i]);
     }
     displayFooter();
-    avg_tat = total / n; // Average turnaround time
-    printf("\n\nAverage Waiting Time=%d", avg_wt);
-    printf("\nAverage Turnaround Time=%d\n", avg_tat);
+
+    printf("Avg turn around time is %.3f\n", averageTurnaroundTime);
+    printf("Avg waiting time is %.3f\n", averageWaitingTime);
 }
 
+//Priority scheduling (only works for arrival time = 0)
+/* void priorityScheduling() {
+    int n=6, i;
+    int arrivalTime[10];
+    int burstTime[10];
+    int priority[10];
+    int temp[10];
+    int time = 0;
+    int count = 0;
+    int shortestProcess;
+    float totalWaitingTime = 0;
+    float totalTurnaroundTime = 0;
+    float averageWaitingTime, averageTurnaroundTime;
+    //populate array with random data
+    //generateRandomArray(arrivalTime, 6, 0, 8, 3);
+    generateRandomArray(burstTime, n, 3, 10, 3);
+    generateRandomArray(priority, n, 1, 4, 2);
+    for (i = 0; i < n; i++)
+    {
+        arrivalTime[i] = 0;
+        temp[i] = burstTime[i]; // adding a duplicate of the burst time to a temporary array
+    }
 
+    // Scheduling algorithm
+    while (count != n)
+    {
+        shortestProcess = -1;
+        for (i = 0; i < n; i++)
+        {
+            if (burstTime[i] > 0 && arrivalTime[i] <= time && (shortestProcess == -1 || priority[i] < priority[shortestProcess]))
+            {
+                shortestProcess = i;
+            }
+        }
+
+        burstTime[shortestProcess]--;
+
+        if (burstTime[shortestProcess] == 0)
+        {
+            count++;
+
+            int waitingTime = time + 1 - arrivalTime[shortestProcess] - temp[shortestProcess];
+            int turnaroundTime = time + 1 - arrivalTime[shortestProcess];
+
+            totalWaitingTime += waitingTime;
+            totalTurnaroundTime += turnaroundTime;
+        }
+
+        time++;
+    }
+
+    averageWaitingTime = totalWaitingTime / n;
+    averageTurnaroundTime = totalTurnaroundTime / n;
+    displayHeader();
+    for (i = 0; i < n; i++) {
+        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               i+1, arrivalTime[i], temp[i], priority[i]);
+    }
+    displayFooter();
+
+    printf("Avg turn around time is %.3f\n", averageTurnaroundTime);
+    printf("Avg waiting time is %.3f\n", averageWaitingTime);
+} */
 
 int main() {
     int userInput;
-
     do {
         printf("Enter 1 to continue or 2 to quit: ");
         scanf("%d", &userInput);
@@ -352,15 +540,11 @@ int main() {
         {
             printf("Enter a number between 1 and 5: ");
             scanf("%d", &userInput);
-
             switch (userInput) 
             {
                 case 1:
                     printf("You selected First come first serve scheduling.\n");
-                    int processes[] = {1, 2, 3};
-                    int n = sizeof(processes) / sizeof(processes[0]);
-                    int burst_time[] = {10, 5, 8};
-                    firstComeFirstServeScheduling(processes, n, burst_time);
+                    firstComeFirstServeScheduling();
                     break;
                 case 2:
                     printf("You selected Shortest job first scheduling.\n");
@@ -368,21 +552,11 @@ int main() {
                     break;
                 case 3:
                     printf("You selected Shortest remaining time first scheduling.\n");
-                    // Process id's, burst time, and arrival time
-                    int proc[][3] = {{1, 6, 1}, {2, 8, 1}, {3, 7, 2}, {4, 3, 3}};
-                    int m = sizeof(proc) / sizeof(proc[0]);
-                    shortestRemainingTimeFirst(proc, m);
+                    shortestRemainingTimeFirst();
                     break;
                 case 4:
                     printf("You selected Round robin scheduling.\n");
-                    // Process ids
-	                int process[] = { 1, 2, 3 };
-	                int l = sizeof(proc) / sizeof(proc[0]);
-	                // Burst time of all processes
-	                int burstTime[] = { 10, 5, 8 };
-	                // Time quantum
-	                int quantum = 2;
-	                roundRobinScheduling(process, l, burstTime, quantum);
+                    roundRobinScheduling();
                     break;
                 case 5:
                     printf("You selected Priority scheduling.\n");
@@ -403,11 +577,5 @@ int main() {
         }
     } 
     while (userInput != 2);
-
-
-
-    
-    
-
     return 0;
 }
