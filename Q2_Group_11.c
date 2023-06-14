@@ -319,14 +319,14 @@ void roundRobinScheduling()
     int x = n;
 
     //populate arrays with random data
-    //generateRandomArray(arr_time, 6, 0, 8, 3);
+    generateRandomArray(arr_time, 6, 0, 8, 3);
     generateRandomArray(burst_time, 6, 3, 10, 3);
     generateRandomArray(priority, 6, 1, 4, 2);
 
     // Input details of processes
     for(int i = 0; i < n; i++)
     {
-        arr_time[i]=0;
+        //arr_time[i]=0;
         temp_burst_time[i] = burst_time[i];
     }
     // Total indicates total time
@@ -375,95 +375,88 @@ void roundRobinScheduling()
     printf("\nAvg Turnaround Time:%.3f", average_turnaround_time);
     printf("\nAverage Waiting Time:%.3f\n", average_wait_time);
 }
-//TODO:FIX
+
+
+//test data
+//arrival time {0 1 3 2 4}
+//burst time {3 6 1 2 4}
+//priorities {3 4 9 7 8}
 void priorityScheduling()
 {
-    int n = 6, i;
-    int arrivalTime[10];
-    int burstTime[10];
-    int priority[10];
-    int temp[10];
-    int time = 0;
-    int count = 0;
-    int shortestProcess;
-    float totalWaitingTime = 0;
-    float totalTurnaroundTime = 0;
-    float averageWaitingTime, averageTurnaroundTime;
+    int proc[6][4];
+    int arrivaltime[6]/*  = {1, 2, 3, 4, 5} */;
+    int bursttime[6]/*  = {3, 5, 1, 7, 4} */;
+    int priority[6]/*  = {3, 4, 1, 7, 8} */;
+    int totalprocess=6;
 
-    //populate array with random data
-    generateRandomArray(arrivalTime, 6, 0, 8, 3);
-    generateRandomArray(burstTime, n, 3, 10, 3);
-    generateRandomArray(priority, n, 1, 4, 2);
+    //populate arrays with random data
+    generateRandomArray(arrivaltime, 6, 0, 8, 3);
+    generateRandomArray(bursttime, 6, 3, 10, 3);
+    generateRandomArray(priority, 6, 1, 4, 2);
 
-    for (i = 0; i < n; i++) {
-        //arrivalTime[i] = 0;
-        temp[i] = burstTime[i]; // adding a duplicate of the burst time to a temporary array
+    for (int i = 0; i < totalprocess; i++) {
+        proc[i][0] = arrivaltime[i];
+        proc[i][1] = bursttime[i];
+        proc[i][2] = priority[i];
+        proc[i][3] = i + 1;
     }
 
-    // Check if there is a process with arrival time 0
-    int process_with_arrival_0 = -1;
-    for (i = 0; i < n; i++) {
-        if (arrivalTime[i] == 0) {
-            process_with_arrival_0 = i;
-            break;
+    // Using FCFS Algorithm to find Waiting time
+    int* wt = (int*)malloc(totalprocess * sizeof(int));
+    int* tat = (int*)malloc(totalprocess * sizeof(int));
+    int* service = (int*)malloc(totalprocess * sizeof(int));
+    int wavg = 0;
+    int tavg = 0;
+
+    service[0] = 0;
+    wt[0] = 0;
+
+    for (int i = 1; i < totalprocess; i++) {
+        service[i] = proc[i - 1][1] + service[i - 1];
+        wt[i] = service[i] - proc[i][0] + 1;
+
+        if (wt[i] < 0) {
+            wt[i] = 0;
         }
     }
 
-    // Execute process with arrival time 0 first
-    if (process_with_arrival_0 != -1) {
-        shortestProcess = process_with_arrival_0;
-        burstTime[shortestProcess]--;
-
-        if (burstTime[shortestProcess] == 0) {
-            count++;
-
-            int waitingTime = time + 1 - arrivalTime[shortestProcess] - temp[shortestProcess];
-            int turnaroundTime = time + 1 - arrivalTime[shortestProcess];
-
-            totalWaitingTime += waitingTime;
-            totalTurnaroundTime += turnaroundTime;
-        }
-
-        time++;
+    // Filling turnaround time array
+    for (int i = 0; i < totalprocess; i++) {
+        tat[i] = proc[i][1] + wt[i];
     }
 
-    // Scheduling algorithm
-    while (count != n) {
-        shortestProcess = -1;
-        for (i = 0; i < n; i++) {
-            if (burstTime[i] > 0 && arrivalTime[i] <= time && (shortestProcess == -1 || priority[i] < priority[shortestProcess])) {
-                shortestProcess = i;
-            }
-        }
+    int* stime = (int*)malloc(totalprocess * sizeof(int));
+    int* ctime = (int*)malloc(totalprocess * sizeof(int));
+    stime[0] = 1;
+    ctime[0] = stime[0] + tat[0];
 
-        if (shortestProcess != -1) {
-            burstTime[shortestProcess]--;
-
-            if (burstTime[shortestProcess] == 0) {
-                count++;
-
-                int waitingTime = time + 1 - arrivalTime[shortestProcess] - temp[shortestProcess];
-                int turnaroundTime = time + 1 - arrivalTime[shortestProcess];
-
-                totalWaitingTime += waitingTime;
-                totalTurnaroundTime += turnaroundTime;
-            }
-        }
-
-        time++;
+    // calculating starting and ending time
+    for (int i = 1; i < totalprocess; i++) {
+        stime[i] = ctime[i - 1];
+        ctime[i] = stime[i] + tat[i] - wt[i];
     }
 
-    averageWaitingTime = totalWaitingTime / n;
-    averageTurnaroundTime = totalTurnaroundTime / n;
-    displayHeader();
-    for (i = 0; i < n; i++) {
-        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
-               i + 1, arrivalTime[i], temp[i], priority[i]);
-    }
-    displayFooter();
+    printf("Process_no\tStart_time\tComplete_time\tTurn_Around_Time\tWaiting_Time\n");
 
-    printf("Avg turn around time is %.3f\n", averageTurnaroundTime);
-    printf("Avg waiting time is %.3f\n", averageWaitingTime);
+    // Display the process details
+    for (int i = 0; i < totalprocess; i++) {
+        wavg += wt[i];
+        tavg += tat[i];
+
+        printf("%d\t\t%d\t\t", proc[i][3], stime[i]);
+        printf("%d\t\t%d\t\t\t%d\n", ctime[i], tat[i], wt[i]);
+    }
+
+    // Display the average waiting time and average turn around time
+    printf("Average waiting time is: %f\n", (float)wavg / totalprocess);
+    printf("Average turnaround time: %f\n", (float)tavg / totalprocess);
+
+    // Free dynamically allocated memory
+    free(wt);
+    free(tat);
+    free(service);
+    free(stime);
+    free(ctime);
 }
 
 //Priority scheduling (only works for arrival time = 0)
