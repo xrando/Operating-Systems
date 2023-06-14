@@ -4,6 +4,8 @@
 # sudo ./CSC1107_Group_11.sh
 #
 # NOTE: Script needs to be run as root
+# Add this line to /etc/xdg/lxsession/LXDE-pi/autostart to run on startup
+# @lxterminal -e sudo /linux/CSC1107_assignment/CSC1107_Group_11.sh
 
 # Variables
 USER=$(whoami)
@@ -85,9 +87,13 @@ echo "Files in $FOLDER_GROUP_11:"
 ls -a $FOLDER_GROUP_11
 
 # Part 11: Insert LKM
+echo
+echo "Inserting LKM:"
 insmod $LKM_FOLDER/CSC1107_11_kernel.ko
 
 # Part 12: Check if LKM is inserted with lsmod and grep
+echo
+echo "Check if LKM is inserted:"
 if lsmod | grep $LKM; then
     echo "LKM inserted"
 else
@@ -146,9 +152,15 @@ pwd
 # Part 25: List all files in current Directory
 echo
 echo "Files in current directory:"
-ls -a $CURRENT_DIR
+ls -a $(pwd)
 
 # Print msg on screen
 
 echo
-echo "The bash shell script of CSC1107_11 has finished all tasks, and stop here."
+echo "The bash shell script of CSC1107_11 has finished all tasks, and stop here. Press enter to exit."
+
+read
+if [ "$?" -ne 0 ]; then
+    echo "Error: Press enter to exit."
+    read
+fi
