@@ -10,10 +10,11 @@
 
 #define DEVICE "/dev/CSC1107_11_kernel"
 #define TIME_BUFF_SIZE 256
-#define BUF_SIZE 2048
+#define BUF_SIZE 4096
 
 char* getDataTime();
 char* get_hash(const EVP_MD *type, char *msg);
+void get_output_from_kernel();
 
 int main() {
     int i, fd;
@@ -78,6 +79,9 @@ int main() {
 
     close(fd);
 
+    // Print the read data from the Device
+    get_output_from_kernel();
+
     return 0;
 }
 
@@ -120,4 +124,21 @@ char* get_hash(const EVP_MD *type, char *msg) {
     hash_string[output_len * 2] = 0;
 
     return hash_string;
+}
+
+void get_output_from_kernel() {
+    // Read from the Device and get the hashed string and comparison result
+    int fd = open(DEVICE, O_RDWR);
+    char read_buf[BUF_SIZE];
+    read(fd, read_buf, sizeof(read_buf));
+    close(fd);
+
+    // Split the read_buf into 3 parts with \n as the delimiter 
+    // (First one is the hashed string, second one is the comparison result)
+    char *hash_string = strtok(read_buf, "\n");
+    char *result = strtok(NULL, "\n");
+
+    // Print the hashed string and comparison result
+    printf("The hashed string from kernel is:\n%s\n", hash_string);
+    printf("The comparison result from kernel is:\n%s\n", result);
 }

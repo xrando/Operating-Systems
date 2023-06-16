@@ -37,6 +37,7 @@ int compare_hashes(const char* received_hash_str,
 #define SUCCESS 0
 #define DEVICE_NAME "CSC1107_11_kernel"   /* Dev name as it appears in /proc/devices   */
 #define BUF_LEN 4096             /* Max length of the message from the device */
+#define MAX_MSG_SIZE 1024       /* Max length of the message from the device */
 
 /*
  * Global variables are declared as static, so are global within the file.
@@ -202,6 +203,7 @@ static ssize_t device_write(struct file *filp,
     char *hash;
     int digest_size;
     char *hash_received;
+    char result[MAX_MSG_SIZE] = "";
 
     if (len > sizeof(msg) - 1)
         len = sizeof(msg) - 1;
@@ -246,6 +248,7 @@ static ssize_t device_write(struct file *filp,
     /* Getting the size of the hash calculated in kernel for comparison */
     digest_size = strlen(hash);
 
+    /* Adding a null terminator to the hash calculated in kernel */
     hash[digest_size] = '\0';
 
     printk(KERN_INFO "Hash calculated in Kernel: ");
@@ -257,6 +260,13 @@ static ssize_t device_write(struct file *filp,
     }
     printk(KERN_CONT "\n");
 
+    
+    for (int i = 0; i < digest_size; i++)
+    {
+        /* Concatenating the hash calculated in kernel to a string */
+        snprintf(result, sizeof(result), "%s%02x", result, hash[i]);
+    }
+
     /* 
      * Comparing the hash received and the hash calculated in kernel 
      * This is done by comparing the size of the hashes and 
@@ -264,19 +274,48 @@ static ssize_t device_write(struct file *filp,
      */
     if (strlen(hash_received) == 2 * digest_size && 
             compare_hashes(hash_received, hash, digest_size) == 0) {
+        /* 
+         * If the hashes match, print a message to the kernel log 
+         * and concatenate the message to the string
+         */
+
         printk(KERN_INFO "Hashes match!\n");
+        
+        /* print hash and compare result to user delimetered by \n */
+        snprintf(result, sizeof(result), "%s\nHashes match!\n", result);
     }
     else {
+        /* 
+         * If the hashes don't match, print a message to the kernel log 
+         * and concatenate the message to the string
+         */
+
         printk(KERN_INFO "Hashes don't match!\n");
+
+        /* print hash and compare result to user delimetered by \n */ 
+        snprintf(result, sizeof(result), "%s\nHashes don't match!\n", result);
     }
 
+    /* Copying the concatenated string to the msg buffer */ 
+    strncpy(msg, result, strlen(result));
+
+    /* Ensuring the msg buffer is null-terminated */
+    msg[MAX_MSG_SIZE - 1] = '\0';
+
+    /* Updating the msg_Ptr to point to the msg buffer */
     msg_Ptr = msg;
 
+    /* 
+     * Return the number of bytes written to the buffer
+     * This is the length of the concatenated string
+     */
     if (len < sizeof(msg))
         memset(msg + len, 0, sizeof(msg) - len);
 
+    /* Freeing the memory allocated for the hash calculated in kernel */
     kfree(hash);
 
+    /* Return the number of bytes written to the buffer */
     return len;
 }
 
@@ -341,11 +380,6 @@ char *get_hash(char *hash_type, char *original_sentence)
     unsigned char *hashed_sentence;
     unsigned int digest_size;
 
-    //printk(KERN_INFO "Hash type: %s\n", hash_type);
-
-    /* Strip the \n from the hash type */
-    //hash_type = strsep(&hash_type, "\n");
-    
     /* Check the hash type */
     if (strcmp(hash_type, "MD5") == 0)
     {
@@ -376,6 +410,7 @@ char *get_hash(char *hash_type, char *original_sentence)
     /* Allocate memory for the hash algorithm */
     alg = crypto_alloc_shash(hash_alg_name, 0, 0);
 
+    /* Check for errors */
     if (IS_ERR(alg)) {
         printk(KERN_ERR "Can't allocate hash algorithm %s\n", hash_type);
         return NULL;
@@ -388,7 +423,11 @@ char *get_hash(char *hash_type, char *original_sentence)
     hashed_sentence = kmalloc(crypto_shash_digestsize(alg), GFP_KERNEL);
     if (!hashed_sentence) {
         printk(KERN_ERR "Unable to allocate digest\n");
+
+        /* Free the memory allocated for the hash algorithm */
         crypto_free_shash(alg);
+
+        /* Return NULL if the allocation was unsuccessful */
         return NULL;
     }
 
@@ -398,10 +437,10 @@ char *get_hash(char *hash_type, char *original_sentence)
     /* Free the memory allocated for the hash algorithm */
     crypto_free_shash(alg);
 
+    /* Add the null terminator to the hash */
     hashed_sentence[digest_size] = '\0';
 
-    /* Free the memory allocated for the hash */
-    /* kfree(hashed_sentence); */
+    /* Return the hash */
     return hashed_sentence;
 }
 
@@ -435,61 +474,6 @@ int compare_hashes(const char* received_hash_str,
 
     return result;
 }
-/*char* get_hash(char *hash_alg, char *input_string) {
-    struct crypto_shash* algorithm;
-    struct shash_desc* desc;
-    int err;
-    char output[1024];
-
-	algorithm = crypto_alloc_shash(hash_alg, 0, 0); break;
-
-	// Check if selected algorithm is available in the system
-	if(IS_ERR(algorithm)) { // Check errors
-		printk(KERN_ALERT "Hashing algorithm not supported\n");
-		return -EFAULT;
-	}
-
-	desc = kmalloc(sizeof(struct shash_desc) + crypto_shash_descsize(algorithm), GFP_KERNEL);
-	if(!desc) { // check errors
-		printk(KERN_ALERT "Failed to allocate memory(kmalloc)\n");
-		return -ENOMEM;
-	}
-	desc->tfm = algorithm;
-
-	// Initialize shash API
-	err = crypto_shash_init(desc);
-	if(err)  {
-		printk(KERN_ALERT  "Failed to initialize shash\n");
-		goto out;
-	}
-
-	// Execute hash function
-	err = crypto_shash_update(desc, input_string, strlen(input_string));
-	if(err) {
-		printk(KERN_ALERT  "Failed to execute hashing function\n");
-		goto out;
-	}
-
-	// Write the result to a new char buffer
-	err = crypto_shash_final(desc, output);
-	if(err) {
-		pr_err("%s: Failed to complete hashing function\n", DEV_NAME);
-		goto out;
-	}
-
-	// Finally, clean up resources
-	crypto_free_shash(algorithm);
-	kfree(desc);
-
-	pr_info("%s: String successfully hashed. Read from this device to get the result\n", DEV_NAME);
-
-	return output;
-
-out: // Manage errors
-	crypto_free_shash(algorithm);
-	kfree(desc);
-	return NULL;
-}*/
 
 MODULE_LICENSE("GPL");                  	// The license type 
 MODULE_DESCRIPTION("Hash compare"); // The description of the module

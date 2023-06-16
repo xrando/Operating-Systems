@@ -10,9 +10,9 @@ sudo dmesg -C
 gcc -o CSC1107_11_user CSC1107_11_user.c -lcrypto
 
 # Run the user file for some time
-for i in {1..5}
-do
-	sudo ./CSC1107_11_user
-done
+sudo ./CSC1107_11_user
+# for i in {1..5}
+# do
+# done
 
-sudo dmesg | less
+# sudo dmesg | less
