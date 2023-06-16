@@ -4,8 +4,35 @@
 # sudo ./CSC1107_Group_11.sh
 #
 # NOTE: Script needs to be run as root
+#
 # Add this line to /etc/xdg/lxsession/LXDE-pi/autostart to run on startup
 # @lxterminal -e sudo /linux/CSC1107_assignment/CSC1107_Group_11.sh
+
+# Not a good way to disable this script to run on boot but..
+RUN_ON_BOOT=1
+
+if [[ $RUN_ON_BOOT -eq 0 ]]; then
+    echo "RUN_ON_BOOT is set to 0, exiting script"
+    exit
+fi
+
+# Check a file for amount of times it has been run, increment if it has been run more than once
+# if file doesn't exist, create it and set to 1
+# If content is 3, or RUN_ON_BOOT is 0, exit script
+FILE=$(pwd)/CSC1107_11_run_count.txt
+if [ -f "$FILE" ]; then
+    RUN_COUNT=$(cat $FILE)
+    if [ $RUN_COUNT -eq 3 ]; then
+        echo "Script has been run $RUN_COUNT times, exiting script"
+        # Reset run count to 0
+        echo 0 > $FILE
+        exit
+    else
+        echo $((RUN_COUNT+1)) > $FILE
+    fi
+else
+    echo 1 > $FILE
+fi
 
 # Variables
 USER=$(whoami)
