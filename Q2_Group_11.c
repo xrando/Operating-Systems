@@ -313,20 +313,20 @@ void shortestRemainingTimeFirst()
 //Round robin (only works for arrival time = 0)
 void roundRobinScheduling() 
 {
-    // Input no of processed
+    /* // Input no of processed
     int n=6;
     int wait_time = 0, ta_time = 0, arr_time[n], burst_time[n], temp_burst_time[n], time_slot=2, priority[n];
     int x = n;
 
     //populate arrays with random data
-    generateRandomArray(arr_time, 6, 0, 8, 3);
+    //generateRandomArray(arr_time, 6, 0, 8, 3);
     generateRandomArray(burst_time, 6, 3, 10, 3);
     generateRandomArray(priority, 6, 1, 4, 2);
 
     // Input details of processes
     for(int i = 0; i < n; i++)
     {
-        //arr_time[i]=0;
+        arr_time[i]=0;
         temp_burst_time[i] = burst_time[i];
     }
     // Total indicates total time
@@ -373,94 +373,168 @@ void roundRobinScheduling()
     float average_wait_time = wait_time * 1.0 / n;
     float average_turnaround_time = ta_time * 1.0 / n;
     printf("\nAvg Turnaround Time:%.3f", average_turnaround_time);
-    printf("\nAverage Waiting Time:%.3f\n", average_wait_time);
-}
+    printf("\nAverage Waiting Time:%.3f\n", average_wait_time); */
 
 
-//test data
-//arrival time {0 1 3 2 4}
-//burst time {3 6 1 2 4}
-//priorities {3 4 9 7 8}
-void priorityScheduling()
-{
-    int proc[6][4];
-    int arrivaltime[6]/*  = {1, 2, 3, 4, 5} */;
-    int bursttime[6]/*  = {3, 5, 1, 7, 4} */;
-    int priority[6]/*  = {3, 4, 1, 7, 8} */;
-    int totalprocess=6;
+    int i, limit=6, total = 0, x, counter = 0, time_quantum=2;
+    int wait_time = 0, turnaround_time = 0, arrival_time[10], burst_time[10], temp[10], priority[10];
+    float average_wait_time, average_turnaround_time;
+
+    /* printf("Enter Total Number of Processes: ");
+    scanf("%d", &limit); */
+    x = limit;
 
     //populate arrays with random data
-    generateRandomArray(arrivaltime, 6, 0, 8, 3);
-    generateRandomArray(bursttime, 6, 3, 10, 3);
+    //generateRandomArray(arr_time, 6, 0, 8, 3);
+    generateRandomArray(burst_time, 6, 3, 10, 3);
     generateRandomArray(priority, 6, 1, 4, 2);
 
-    for (int i = 0; i < totalprocess; i++) {
-        proc[i][0] = arrivaltime[i];
-        proc[i][1] = bursttime[i];
-        proc[i][2] = priority[i];
-        proc[i][3] = i + 1;
+    for(i = 0; i < limit; i++) 
+    {
+        /* printf("\nEnter Details of Process[%d]\n", i + 1);
+
+        printf("Arrival Time: ");
+        scanf("%d", &arrival_time[i]);
+
+        printf("Burst Time: ");
+        scanf("%d", &burst_time[i]); */
+        arrival_time[i]=0;
+        temp[i] = burst_time[i];
     }
 
-    // Using FCFS Algorithm to find Waiting time
-    int* wt = (int*)malloc(totalprocess * sizeof(int));
-    int* tat = (int*)malloc(totalprocess * sizeof(int));
-    int* service = (int*)malloc(totalprocess * sizeof(int));
-    int wavg = 0;
-    int tavg = 0;
+    /* printf("\nEnter Time Quantum: ");
+    scanf("%d", &time_quantum); */
 
-    service[0] = 0;
-    wt[0] = 0;
+    /* printf("\nProcess ID\tBurst Time\tTurnaround Time\tWaiting Time\n"); */
+    displayHeader();
+    for(total = 0, i = 0; x != 0;) {
+        if(temp[i] <= time_quantum && temp[i] > 0) {
+            total = total + temp[i];
+            temp[i] = 0;
+            counter = 1;
+        }
+        else if(temp[i] > 0) {
+            temp[i] = temp[i] - time_quantum;
+            total = total + time_quantum;
+        }
+        
+        if(temp[i] == 0 && counter == 1) {
+            x--;
+            //printf("Process[%d]\t%d\t\t%d\t\t%d\n", i + 1, burst_time[i], total - arrival_time[i], total - arrival_time[i] - burst_time[i]);
+            printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+               i+1, arrival_time[i], burst_time[i], priority[i]);
+            wait_time = wait_time + total - arrival_time[i] - burst_time[i];
+            turnaround_time = turnaround_time + total - arrival_time[i];
+            counter = 0;
+        }
+        if(i == limit - 1) {
+            i = 0;
+        }
+        else if(arrival_time[i + 1] <= total) {
+            i++;
+        }
+        else {
+            i = 0;
+        }
+    }
+    displayFooter();
+    average_wait_time = wait_time * 1.0 / limit;
+    average_turnaround_time = turnaround_time * 1.0 / limit;
+    printf("\nAverage Turnaround Time: %.3f\n", average_turnaround_time);
+    printf("\nAverage Waiting Time: %.3f", average_wait_time);
+}
 
-    for (int i = 1; i < totalprocess; i++) {
-        service[i] = proc[i - 1][1] + service[i - 1];
-        wt[i] = service[i] - proc[i][0] + 1;
+//sorting issue, process with lower priority num upon 
+//previous process completion time cant be sorted properly
+/* void priorityScheduling()
+{
+    int bt[20], at[10], n=6, i, j, temp, p[10], st[10], ft[10], wt[10], ta[10];
+    int totwt = 0, totta = 0;
+    float awt, ata;
+    char pn[10][10]={
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+    }, t[10];
 
-        if (wt[i] < 0) {
-            wt[i] = 0;
+    printf("Enter the number of processes:");
+    scanf("%d", &n);
+
+    for(i = 0; i < n; i++)
+    {
+        printf("Enter process name, arrival time, execution time, and priority:");
+        scanf("%s%d%d%d", pn[i], &at[i], &et[i], &p[i]);
+    }
+
+    //populate arrays with random data
+    generateRandomArray(at, 6, 0, 8, 3);
+    generateRandomArray(bt, 6, 3, 10, 3);
+    generateRandomArray(p, 6, 1, 4, 2);
+
+    // Sort the processes based on arrival time and priority
+    for(i = 0; i < n; i++)
+    {
+        for(j = i + 1; j < n; j++)
+        {
+            if(at[i] > at[j] || (at[i] == at[j] && p[i] > p[j]))
+            {
+                temp = p[i];
+                p[i] = p[j];
+                p[j] = temp;
+
+                temp = at[i];
+                at[i] = at[j];
+                at[j] = temp;
+
+                temp = bt[i];
+                bt[i] = bt[j];
+                bt[j] = temp;
+
+                strcpy(t, pn[i]);
+                strcpy(pn[i], pn[j]);
+                strcpy(pn[j], t);
+            }
         }
     }
 
-    // Filling turnaround time array
-    for (int i = 0; i < totalprocess; i++) {
-        tat[i] = proc[i][1] + wt[i];
+    for(i = 0; i < n; i++)
+    {
+        if(i == 0)
+        {
+            st[i] = at[i];
+            wt[i] = st[i] - at[i];
+            ft[i] = st[i] + bt[i];
+            ta[i] = ft[i] - at[i];
+        }
+        else
+        {
+            st[i] = (ft[i - 1] > at[i]) ? ft[i - 1] : at[i];
+            wt[i] = st[i] - at[i];
+            ft[i] = st[i] + bt[i];
+            ta[i] = ft[i] - at[i];
+        }
+
+        totwt += wt[i];
+        totta += ta[i];
     }
 
-    int* stime = (int*)malloc(totalprocess * sizeof(int));
-    int* ctime = (int*)malloc(totalprocess * sizeof(int));
-    stime[0] = 1;
-    ctime[0] = stime[0] + tat[0];
+    awt = (float)totwt / n;
+    ata = (float)totta / n;
 
-    // calculating starting and ending time
-    for (int i = 1; i < totalprocess; i++) {
-        stime[i] = ctime[i - 1];
-        ctime[i] = stime[i] + tat[i] - wt[i];
+    printf("\nPname\tarrivaltime\texecutiontime\tpriority\twaitingtime\ttatime");
+    for(i = 0; i < n; i++)
+    {
+        printf("\n%s\t%5d\t\t%5d\t\t%5d\t\t%5d\t\t%5d", pn[i], at[i], bt[i], p[i], wt[i], ta[i]);
     }
-
-    printf("Process_no\tStart_time\tComplete_time\tTurn_Around_Time\tWaiting_Time\n");
-
-    // Display the process details
-    for (int i = 0; i < totalprocess; i++) {
-        wavg += wt[i];
-        tavg += tat[i];
-
-        printf("%d\t\t%d\t\t", proc[i][3], stime[i]);
-        printf("%d\t\t%d\t\t\t%d\n", ctime[i], tat[i], wt[i]);
-    }
-
-    // Display the average waiting time and average turn around time
-    printf("Average waiting time is: %f\n", (float)wavg / totalprocess);
-    printf("Average turnaround time: %f\n", (float)tavg / totalprocess);
-
-    // Free dynamically allocated memory
-    free(wt);
-    free(tat);
-    free(service);
-    free(stime);
-    free(ctime);
-}
+    printf("\nAverage waiting time is: %f", awt);
+    printf("\nAverage turnaround time is: %f\n", ata);
+} */
 
 //Priority scheduling (only works for arrival time = 0)
-/* void priorityScheduling() {
+void priorityScheduling() {
     int n=6, i;
     int arrivalTime[10];
     int burstTime[10];
@@ -521,12 +595,12 @@ void priorityScheduling()
 
     printf("Avg turn around time is %.3f\n", averageTurnaroundTime);
     printf("Avg waiting time is %.3f\n", averageWaitingTime);
-} */
+}
 
 int main() {
     int userInput;
     do {
-        printf("Enter 1 to continue or 2 to quit: ");
+        printf("Enter 1 to continue or 0 to quit: ");
         scanf("%d", &userInput);
 
         if (userInput == 1) 
@@ -560,7 +634,7 @@ int main() {
                     break;
             }
         } 
-        else if (userInput == 2) 
+        else if (userInput == 0) 
         {
             printf("Quit the program.\n");
         } 
@@ -569,6 +643,6 @@ int main() {
             printf("Invalid choice. Please try again.\n");
         }
     } 
-    while (userInput != 2);
+    while (userInput != 0);
     return 0;
 }
