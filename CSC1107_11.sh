@@ -8,7 +8,6 @@
 # Add this line to /etc/xdg/lxsession/LXDE-pi/autostart to run on startup
 # @lxterminal -e sudo /linux/CSC1107_assignment/CSC1107_Group_11.sh
 
-# Not a good way to disable this script to run on boot but..
 RUN_ON_BOOT=1
 
 if [[ $RUN_ON_BOOT -eq 0 ]]; then
@@ -103,7 +102,8 @@ cd $FOLDER_GROUP_11
 # 3. makefile
 # 4. CSC1107_11_.sh (This file)
 
-cp -r $LKM_FOLDER $FOLDER_GROUP_11 #CAUTION: This will copy the folder and all its contents
+#CAUTION: This will copy the folder and all its contents
+cp -r $LKM_FOLDER/. $FOLDER_GROUP_11 
 
 # Part 9: Compile LKM with make
 make -C $LKM_FOLDER
