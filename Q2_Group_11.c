@@ -7,11 +7,11 @@ int generateRandomNumber(int, int);
 void generateRandomArray(int numbers[], int size, int min, int max, int maxDuplicates);
 void displayHeader();
 void displayFooter();
-void firstComeFirstServeScheduling();
-void shortestJobFirst();
-void shortestRemainingTimeFirst();
-void roundRobinScheduling();
-void priorityScheduling();
+void firstComeFirstServeScheduling(int arrivalTime[], int burstTime[], int priority[], int n);
+void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n);
+void shortestRemainingTimeFirst(int arrivalTime[], int burstTime[], int priority[], int n);
+void roundRobinScheduling(int arrivalTime[], int burstTime[], int priority[], int n);
+void priorityScheduling(int arrivalTime[], int burstTime[], int priority[], int n);
 void displaySequence(int seq[100][2], int c);
 
 
@@ -57,7 +57,24 @@ void generateRandomArray(int numbers[], int size, int min, int max, int maxDupli
         }
     }
 }
+/*
+generateRandomArray(at, 6, 0, 8, 3);
+generateRandomArray(bt, 6, 3, 10, 3);
+generateRandomArray(priority, 6, 1, 4, 2);
+*/
+void generateSpecificArray(int numbers[], int type) {
+    //FCFS -> lots of short processes
 
+    //SJF -> lots of short processes (distribution & arrival times, cannot have a long job then short job)
+
+    //SRTF -> 
+
+    //RR -> if time quantum too large, behave like fcfs. if quantum time too small, too much switching. try big quantum time and large processes
+
+    //PS -> priorities need to be well chosen
+
+
+}
 void displayHeader()
 {
     printf("╔═══════════╦═════════════╦═══════════════╦═════════════════╗\n");
@@ -112,16 +129,17 @@ void displaySequence(int seq[100][2], int c){
 }
 
 //First come first serve
-void firstComeFirstServeScheduling() {
-    int i, j, temp = 0, ct[10], tat[10], wt[10], at[10], bt[10],priority[10], n=6;
+void firstComeFirstServeScheduling(int arrivalTime[], int burstTime[], int priority[], int n) {
+    int i, j, temp = 0, ct[n], tat[n], wt[n], at[n], bt[n];
     int processes[6] = {1,2,3,4,5,6};
     float awt = 0, atat = 0;
 
     int seqCounter=0, sequence[100][2];
 
-    generateRandomArray(at, 6, 0, 8, 3);
-    generateRandomArray(bt, 6, 3, 10, 3);
-    generateRandomArray(priority, 6, 1, 4, 2);
+    for (i=0;i<n;i++){
+        at[i] = arrivalTime[i];
+        bt[i] = burstTime[i];
+    }
 
     // Sorting the processes based on arrival time
     for (i = 0; i < n; i++) {
@@ -171,13 +189,7 @@ void firstComeFirstServeScheduling() {
         awt += wt[i];
     }
 
-    displayHeader();
-    for (i = 0; i < n; i++) {
-        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
-               processes[i], at[i], bt[i], priority[i]);
-    }
-    displayFooter();
-
+    printf("\n\nFCFS Gant Chart:\n");
     displaySequence(sequence, seqCounter);
 
     atat = atat / n;
@@ -185,23 +197,24 @@ void firstComeFirstServeScheduling() {
     printf("\nAverage turnaround time: %.3f\n", atat);
     printf("Average waiting time: %.3f\n", awt);
 }
+
 //Shortest Job First
-void shortestJobFirst()
+void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n)
 {
-    int n = 6;
-    int bt[n], art[n], wt[n], tat[n],priority[n];
+    int bt[n], art[n], wt[n], tat[n];
     int total_wt = 0, total_tat = 0;
 
     int seqCounter=0, sequence[100][2];
 
-    //populate array with random data
-    generateRandomArray(art, 6, 0, 8, 3);
-    generateRandomArray(bt, n, 3, 10, 3);
-    generateRandomArray(priority, n, 1, 4, 2);
+
     // Calculate waiting time
     int rt[n];
-    for (int i = 0; i < n; i++)
-        rt[i] = bt[i];
+    for (int i = 0; i < n; i++){
+        bt[i] = burstTime[i];
+        art[i] = arrivalTime[i];
+
+        rt[i] = burstTime[i];
+    }   
 
     int complete = 0, t = 0;
     int shortest = -1, finish_time;
@@ -261,17 +274,12 @@ void shortestJobFirst()
     // Calculate turnaround time
     for (int i = 0; i < n; i++){
         tat[i] = bt[i] + wt[i];
-    }
-    // Display processes along with all details
-    displayHeader();
-    for (int i = 0; i < n; i++) {
+
         total_wt += wt[i];
         total_tat += tat[i];
-        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
-               i+1, art[i], bt[i], priority[i]);
     }
-    displayFooter();
 
+    printf("\n\nSJF Gant Chart:\n");
     displaySequence(sequence, seqCounter);
 
     // Calculate average waiting time and average turnaround time
@@ -280,23 +288,21 @@ void shortestJobFirst()
     printf("\nAverage turnaround time = %.3f", avg_tat);
     printf("\nAverage waiting time = %.3f\n", avg_wt);
 }
+
 //Shortest remaining time first
-void shortestRemainingTimeFirst()
+void shortestRemainingTimeFirst(int arrivalTime[], int burstTime[], int priority[], int n)
 {
-    int arrival_time[10], burst_time[10], temp[10], priority[10];
-    int i, smallest, count = 0, time, limit=6;
+    int arrival_time[10], burst_time[10], temp[10];
+    int i, smallest, count = 0, time, limit=n;
     double wait_time = 0, turnaround_time = 0, end;
     float average_waiting_time, average_turnaround_time;
 
     int seqCounter=0, sequence[100][2];
 
-
-    //populate arrays with random data
-    generateRandomArray(arrival_time, 6, 0, 8, 3);
-    generateRandomArray(burst_time, 6, 3, 10, 3);
-    generateRandomArray(priority, 6, 1, 4, 2);
     for(i=0;i<limit;i++)
     {
+        arrival_time[i] = arrivalTime[i];
+        burst_time[i] = burstTime[i];
         temp[i] = burst_time[i];
     }
 
@@ -335,13 +341,8 @@ void shortestRemainingTimeFirst()
 
     average_waiting_time = wait_time / limit;
     average_turnaround_time = turnaround_time / limit;
-    displayHeader();
-    for (i = 0; i < limit; i++) {
-        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
-               i+1, arrival_time[i], temp[i], priority[i]);
-    }
-    displayFooter();
 
+    printf("\n\nSRTF Gant Chart:\n");
     displaySequence(sequence, seqCounter);
 
     printf("Average Turnaround Time: %.3f", average_turnaround_time);
@@ -403,20 +404,16 @@ bool remainingProc(int res_burst[10]){
     return x;
 }
 
-void roundRobinScheduling() 
+void roundRobinScheduling(int arrivalTime[], int burstTime[], int priority[], int n) 
 {
-    int i, j, p, q=0, releaseTime, t, limit=6, total = 0, x, time_quantum=2;
-    int total_wait_time = 0, total_turnaround_time = 0, priority[10], arrival_time[10], burst_time[10];
+    int i, j, p, q=0, releaseTime, t, limit=n, total = 0, x, time_quantum=2;
+    int total_wait_time = 0, total_turnaround_time = 0, arrival_time[10], burst_time[10];
     float average_wait_time, average_turnaround_time;
     x = limit;
     int ProcessScheduler[1000], WaitingTime[100], TurnaroundTime[100];
 
     int seqCounter=0, sequence[100][2];
 
-    //populate arrays with random data
-    generateRandomArray(arrival_time, 6, 0, 8, 3);
-    generateRandomArray(burst_time, 6, 3, 10, 3);
-    generateRandomArray(priority, 6, 1, 4, 2);
     
 
     // create copy of burst time and arrival time
@@ -424,6 +421,10 @@ void roundRobinScheduling()
     int res_arrival[10];
     for (i = 0; i < limit; i++)
     {
+        //printf("%d %d\n", arrivalTime[i], burstTime[i]);
+        burst_time[i] = burstTime[i];
+        arrival_time[i] = arrivalTime[i];
+
         res_burst[i] = burst_time[i];
         res_arrival[i] = arrival_time[i];
 
@@ -496,14 +497,8 @@ void roundRobinScheduling()
 	}
     average_turnaround_time = average_turnaround_time/limit;
 	average_wait_time = average_wait_time/limit;
-
-    displayHeader();
-    for (i = 0; i < limit; i++) {
-        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
-               i+1, arrival_time[i], burst_time[i], priority[i]);
-    }
-    displayFooter();
-
+    
+    printf("\n\nRR Gant Chart:\n");
     displaySequence(sequence, seqCounter);
 
     printf("\nAverage Turnaround Time: %.3f", average_turnaround_time);
@@ -513,11 +508,10 @@ void roundRobinScheduling()
 
 
 //Priority scheduling (only works for arrival time = 0)
-void priorityScheduling() {
-    int n=6, i;
+void priorityScheduling(int at[], int bt[], int priority[], int n) {
+    int i;
     int arrivalTime[10];
     int burstTime[10];
-    int priority[10];
     int temp[10];
     int time = 0;
     int count = 0;
@@ -528,13 +522,11 @@ void priorityScheduling() {
     int seqCounter=0, sequence[100][2];
 
 
-    //populate array with random data
-    generateRandomArray(arrivalTime, 6, 0, 8, 3);
-    generateRandomArray(burstTime, n, 3, 10, 3);
-    generateRandomArray(priority, n, 1, 4, 2);
-
     for (i = 0; i < n; i++)
     {
+        arrivalTime[i] = at[i];
+        burstTime[i] = bt[i];
+
         temp[i] = burstTime[i]; // adding a duplicate of the burst time to a temporary array
     }
 
@@ -555,8 +547,6 @@ void priorityScheduling() {
                 }
             }
         }
-        //printf("\nPriority: %d",shortestProcess);
-        
 
         
         /* NON - PREEMPTIVE */
@@ -577,20 +567,10 @@ void priorityScheduling() {
         seqCounter++;
     }
 
-    //printf("\n%.3f", totalTurnaroundTime);
-    //printf("\n%.3f\n", totalWaitingTime);
-    
-    
-
     averageWaitingTime = totalWaitingTime / n;
     averageTurnaroundTime = totalTurnaroundTime / n;
-    displayHeader();
-    for (i = 0; i < n; i++) {
-        printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
-               i+1, arrivalTime[i], temp[i], priority[i]);
-    }
-    displayFooter();
 
+    printf("\n\nPS Gant Chart:\n");
     displaySequence(sequence, seqCounter);
 
     printf("Avg turn around time is %.3f\n", averageTurnaroundTime);
@@ -601,6 +581,12 @@ void priorityScheduling() {
 
 
 int main() {
+    int arrivalTime[10];
+    int burstTime[10];
+    int priority[10];
+    int n=6;
+    
+
     int userInput;
     do {
         printf("Enter 1 to continue or 0 to quit: ");
@@ -610,32 +596,74 @@ int main() {
         {
             printf("Enter a number between 1 and 5: ");
             scanf("%d", &userInput);
+
+            //output to txt
+            freopen("output.txt","w",stdout);
+
+            //populate array with random data (NEED TO EDIT TO PROVIDE ARR/BURST GIVEN ALGO CHOSEN)
+            generateRandomArray(arrivalTime, 6, 0, 8, 3);
+            generateRandomArray(burstTime, n, 3, 10, 3);
+            generateRandomArray(priority, n, 1, 4, 2);
+
+
+            displayHeader();
+            for (int i = 0; i < n; i++) {
+                printf("║    P%2d    ║     %2d      ║      %2d       ║       %2d        ║\n",
+                    i+1, arrivalTime[i], burstTime[i], priority[i]);
+            }
+            displayFooter();
+
+            //switch case based on choice
             switch (userInput) 
             {
                 case 1:
                     printf("You selected First come first serve scheduling.\n");
-                    firstComeFirstServeScheduling();
+                    firstComeFirstServeScheduling(arrivalTime, burstTime, priority, n);
+                    shortestJobFirst(arrivalTime, burstTime, priority, n);
+                    shortestRemainingTimeFirst(arrivalTime, burstTime, priority, n);
+                    roundRobinScheduling(arrivalTime, burstTime, priority, n);
+                    priorityScheduling(arrivalTime, burstTime, priority, n);
+
                     break;
                 case 2:
                     printf("You selected Shortest job first scheduling.\n");
-                    shortestJobFirst();
+                    shortestJobFirst(arrivalTime, burstTime, priority, n);
                     break;
                 case 3:
                     printf("You selected Shortest remaining time first scheduling.\n");
-                    shortestRemainingTimeFirst();
+                    shortestRemainingTimeFirst(arrivalTime, burstTime, priority, n);
                     break;
                 case 4:
                     printf("You selected Round robin scheduling.\n");
-                    roundRobinScheduling();
+                    roundRobinScheduling(arrivalTime, burstTime, priority, n);
                     break;
                 case 5:
                     printf("You selected Priority scheduling.\n");
-                    priorityScheduling();
+                    priorityScheduling(arrivalTime, burstTime, priority, n);
                     break;
                 default:
                     printf("Invalid input. Please enter a number between 1 and 5.\n");
                     break;
             }
+
+            //close stdout
+            fclose(stdout);
+            // Restore standard output to console
+            #ifdef _WIN32
+                freopen("CON", "w", stdout);
+            #else
+                freopen("/dev/tty", "w", stdout);
+            #endif
+            
+            
+
+            FILE *file = fopen("output.txt", "r");
+            char c;
+            while ((c = fgetc(file)) != EOF) {
+                    putchar(c);
+                }
+            fclose(file);
+            
         } 
         else if (userInput == 0) 
         {
@@ -645,6 +673,8 @@ int main() {
         {
             printf("Invalid choice. Please try again.\n");
         }
+
+        
     } 
     while (userInput != 0);
     return 0;
