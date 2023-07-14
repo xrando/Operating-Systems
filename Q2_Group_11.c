@@ -129,26 +129,23 @@ void displaySequence(int seq[100][2], int c){
 }
 
 //First come first serve
-void firstComeFirstServeScheduling(int arrivalTime[], int burstTime[], int priority[], int n) {
-    int i, j, temp = 0, ct[n], tat[n], wt[n], at[n], bt[n];
+void firstComeFirstServeScheduling(int at[], int bt[], int priority[], int n) {
+    // Initialize variables
+    int i, j, temp = 0, ct[n], tat[n], wt[n];
     int processes[6] = {1,2,3,4,5,6};
     float awt = 0, atat = 0;
-
     int seqCounter=0, sequence[100][2];
 
-    for (i=0;i<n;i++){
-        at[i] = arrivalTime[i];
-        bt[i] = burstTime[i];
-    }
-
-    // Sorting the processes based on arrival time
+    // Sort the processes based on arrival time using bubble sort
     for (i = 0; i < n; i++) {
         for (j = 0; j < (n - i - 1); j++) {
+            // Swap the processes if the arrival time is not in ascending order
             if (at[j] > at[j + 1]) {
                 temp = processes[j + 1];
                 processes[j + 1] = processes[j];
                 processes[j] = temp;
 
+                // Swap arrival time, burst time, and priority accordingly
                 temp = at[j + 1];
                 at[j + 1] = at[j];
                 at[j] = temp;
@@ -164,14 +161,19 @@ void firstComeFirstServeScheduling(int arrivalTime[], int burstTime[], int prior
         }
     }
 
-    // Calculating completion time
+    // Calculate completion time
     ct[0] = at[0] + bt[0];
     sequence[seqCounter][0] = 0+1;
     sequence[seqCounter][1] = ct[0];
     seqCounter++;
+
+    // Calculate completion time for the remaining processes
     for (i = 1; i < n; i++) {
-        temp = 0; // Reset temp to 0 inside the loop
+        // Reset temp to 0 inside the loop
+        temp = 0; 
         if (ct[i - 1] < at[i]) {
+            // If the previous process completed before the current process arrives,
+            // calculate the waiting time for the current process
             temp = at[i] - ct[i - 1];
         }
         ct[i] = ct[i - 1] + bt[i] + temp;
@@ -183,38 +185,44 @@ void firstComeFirstServeScheduling(int arrivalTime[], int burstTime[], int prior
 
     // Calculating turnaround time and waiting time
     for (i = 0; i < n; i++) {
-        tat[i] = ct[i] - at[i];
-        wt[i] = tat[i] - bt[i];
-        atat += tat[i];
-        awt += wt[i];
+        // Turnaround time = Completion time - Arrival time
+        tat[i] = ct[i] - at[i]; 
+        // Waiting time = Turnaround time - Burst time
+        wt[i] = tat[i] - bt[i]; 
+        // Sum of turnaround times for average calculation
+        atat += tat[i]; 
+        // Sum of waiting times for average calculation
+        awt += wt[i]; 
     }
 
-    printf("\n\nFCFS Gant Chart:\n");
+    // Print the Gantt Chart
+    printf("\n\nFCFS Gantt Chart:\n");
     displaySequence(sequence, seqCounter);
 
+    // Calculate and print average turnaround time and average waiting time
     atat = atat / n;
     awt = awt / n;
     printf("\nAverage turnaround time: %.3f\n", atat);
     printf("Average waiting time: %.3f\n", awt);
 }
 
+
 //Shortest Job First
-void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n)
-{
+void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n) {
+    // init variables
     int bt[n], art[n], wt[n], tat[n];
     int total_wt = 0, total_tat = 0;
 
-    int seqCounter=0, sequence[100][2];
-
+    int seqCounter = 0, sequence[100][2];
 
     // Calculate waiting time
     int rt[n];
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++) {
         bt[i] = burstTime[i];
         art[i] = arrivalTime[i];
 
         rt[i] = burstTime[i];
-    }   
+    }
 
     int complete = 0, t = 0;
     int shortest = -1, finish_time;
@@ -259,27 +267,26 @@ void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n)
             if (wt[shortest] < 0)
                 wt[shortest] = 0;
 
-
-            //sequence track
-            sequence[seqCounter][0] = shortest+1;
+            // Sequence tracking
+            sequence[seqCounter][0] = shortest + 1;
             sequence[seqCounter][1] = finish_time;
             seqCounter++;
         }
 
         // Increment time
         t++;
-
     }
 
     // Calculate turnaround time
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++) {
         tat[i] = bt[i] + wt[i];
 
         total_wt += wt[i];
         total_tat += tat[i];
     }
 
-    printf("\n\nSJF Gant Chart:\n");
+    // Print the Gantt Chart
+    printf("\n\nSJF Gantt Chart:\n");
     displaySequence(sequence, seqCounter);
 
     // Calculate average waiting time and average turnaround time
@@ -289,66 +296,74 @@ void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n)
     printf("\nAverage waiting time = %.3f\n", avg_wt);
 }
 
+
 //Shortest remaining time first
-void shortestRemainingTimeFirst(int arrivalTime[], int burstTime[], int priority[], int n)
-{
-    int arrival_time[10], burst_time[10], temp[10];
-    int i, smallest, count = 0, time, limit=n;
+void shortestRemainingTimeFirst(int arrival_time[], int burst_time[], int priority[], int n) {
+    // init variables
+    int temp[10];
+    int i, smallest, count = 0, time, limit = n;
     double wait_time = 0, turnaround_time = 0, end;
     float average_waiting_time, average_turnaround_time;
+    int seqCounter = 0, sequence[100][2];
 
-    int seqCounter=0, sequence[100][2];
-
-    for(i=0;i<limit;i++)
-    {
-        arrival_time[i] = arrivalTime[i];
-        burst_time[i] = burstTime[i];
+    // Copy burst time into a temp array
+    for (i = 0; i < limit; i++) {
         temp[i] = burst_time[i];
     }
 
     burst_time[9] = 9999;
 
-    for (time = 0; count != limit; time++)
-    {
+    // Execute processes until all processes are completed
+    for (time = 0; count != limit; time++) {
         smallest = 9;
-        for (i = 0; i < limit; i++)
-        {
-            if (arrival_time[i] <= time && burst_time[i] < burst_time[smallest] && burst_time[i] > 0)
-            {
+
+        // Find the process with the smallest burst time among eligible processes
+        for (i = 0; i < limit; i++) {
+            if (arrival_time[i] <= time && burst_time[i] < burst_time[smallest] && burst_time[i] > 0) {
                 smallest = i;
             }
         }
+
+        // Decrement the burst time of the smallest process
         burst_time[smallest]--;
-        if (burst_time[smallest] == 0)
-        {
+
+        // If a process gets completely executed
+        if (burst_time[smallest] == 0) {
             count++;
             end = time + 1;
+
+            // Calculate the waiting time and turnaround time for the completed process
             wait_time = wait_time + end - arrival_time[smallest] - temp[smallest];
             turnaround_time = turnaround_time + end - arrival_time[smallest];
         }
 
-        //since logic of code is to decrement burst time, check if current process is same as previous
-        if (sequence[seqCounter-1][0]!=smallest+1){
-            sequence[seqCounter][0] = smallest+1;
+        // Sequence tracking
+        if (sequence[seqCounter - 1][0] != smallest + 1) {
+            sequence[seqCounter][0] = smallest + 1;
             sequence[seqCounter][1] = time;
             seqCounter++;
         }
     }
-    for (i=0; i<seqCounter; i++){
-        sequence[i][1] = sequence[i+1][1];
-    }
-    sequence[seqCounter-1][1] = end;
 
+    // Update the last entry in the sequence array with the end time
+    for (i = 0; i < seqCounter; i++) {
+        sequence[i][1] = sequence[i + 1][1];
+    }
+    sequence[seqCounter - 1][1] = end;
+
+    // Calculate average waiting time and average turnaround time
     average_waiting_time = wait_time / limit;
     average_turnaround_time = turnaround_time / limit;
 
-    printf("\n\nSRTF Gant Chart:\n");
+    // Print the Gantt Chart
+    printf("\n\nSRTF Gantt Chart:\n");
     displaySequence(sequence, seqCounter);
 
+    // Print average turnaround time and average waiting time
     printf("Average Turnaround Time: %.3f", average_turnaround_time);
     printf("\nAverage Waiting Time: %.3f\n", average_waiting_time);
-
 }
+
 
 
 //Round robin 
