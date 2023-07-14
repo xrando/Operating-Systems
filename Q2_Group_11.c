@@ -208,20 +208,17 @@ void firstComeFirstServeScheduling(int at[], int bt[], int priority[], int n) {
 
 
 //Shortest Job First
-void shortestJobFirst(int arrivalTime[], int burstTime[], int priority[], int n) {
+void shortestJobFirst(int art[], int bt[], int priority[], int n) {
     // init variables
-    int bt[n], art[n], wt[n], tat[n];
+    int wt[n], tat[n];
     int total_wt = 0, total_tat = 0;
 
     int seqCounter = 0, sequence[100][2];
 
-    // Calculate waiting time
+    // store burst time in temp array
     int rt[n];
     for (int i = 0; i < n; i++) {
-        bt[i] = burstTime[i];
-        art[i] = arrivalTime[i];
-
-        rt[i] = burstTime[i];
+        rt[i] = bt[i];
     }
 
     int complete = 0, t = 0;
