@@ -606,7 +606,7 @@ int main() {
 
         if (userInput == 1) 
         {
-            printf("Enter a number between 1 and 5: ");
+            printf("Enter a number between 1 and 5 (1 for fcfs, 2 for sjf, 3 for srtf, 4 for rr, 5 for priority): ");
             scanf("%d", &userInput);
 
             //output to txt
