@@ -62,7 +62,7 @@ echo "Current User: $USER"
 echo
 echo "Current Directory: $CURRENT_DIR"
 
-# Part 3 & 4: Create new User (Uncomment to run) and use bash as default shell
+# Part 3 & 4: Create new User and use bash as default shell
 useradd -m -s $SHELL $NEW_USER_NAME
 
 # Part 4: Display line containing new user
@@ -83,11 +83,9 @@ if [ -d "$FOLDER_GROUP_11" ]; then
 
         # Create Folder_Group_11
         mkdir $FOLDER_GROUP_11
-        # Might need to change permissions
     fi
 else
     mkdir $FOLDER_GROUP_11
-    # Might need to change permissions
     echo
     echo "Folder created"
 fi
