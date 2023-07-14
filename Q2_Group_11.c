@@ -85,7 +85,7 @@ void displayFooter()
 {
     printf("╚═══════════╩═════════════╩═══════════════╩═════════════════╝\n");
 }
-
+//seems to have some issues w fcfs,sjf, maybe we just use online tools to generate
 void displaySequence(int seq[100][2], int c){
     //top
     printf("╔");
