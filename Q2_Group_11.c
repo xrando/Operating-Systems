@@ -338,24 +338,41 @@ void shortestRemainingTimeFirst(int arrival_time[], int burst_time[], int priori
         for (i = 0; i < n; i++)
         {
             // Find the process with the minimum remaining time
-            if (arrival_time[i] <= time && burst_time[i] < burst_time[smallest] && burst_time[i] > 0)
-                smallest = i;
+            if (arrival_time[i] <= time && burst_time[i] <= burst_time[smallest] && burst_time[i] > 0)
+            {
+                if (arrival_time[i] < arrival_time[smallest])
+                {
+                    smallest = i;
+                }
+                else if (burst_time[i] < burst_time[smallest])
+                {
+                    smallest = i;
+                }
+            }
         }
         burst_time[smallest]--;
 
         // Sequence tracking
         // check if change in process has occured
-        if (seqCounter > 0 && sequence[seqCounter - 1][0] != smallest + 1)
+
+        if (seqCounter == 0)
         {
             sequence[seqCounter][0] = smallest + 1;
-            sequence[seqCounter][1] = time;
+            sequence[seqCounter][1] = time + 1;
             seqCounter++;
         }
-        else if (seqCounter == 0)
+        else
         {
-            sequence[seqCounter][0] = smallest + 1;
-            sequence[seqCounter][1] = time;
-            seqCounter++;
+            if (seqCounter > 0 && sequence[seqCounter - 1][0] != smallest + 1)
+            {
+                sequence[seqCounter][0] = smallest + 1;
+                sequence[seqCounter][1] = time + 1;
+                seqCounter++;
+            }
+            else
+            {
+                sequence[seqCounter - 1][1] = time + 1;
+            }
         }
 
         // When Process is completed, add and calculate the waiting time and turnaround time
