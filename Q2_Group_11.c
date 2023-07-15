@@ -724,7 +724,7 @@ int main() {
                     break;
                 case 5:
                     printf("You selected Priority scheduling.\n");
-                    printf("Priority Scheduling has high chance of resulting in the lowest execution time due to the use of priority values\nThis is best for real time operating systems.");
+                    printf("Priority Scheduling has high chance of resulting in the lowest execution time due to the use of priority values\nThis is best for real time operating systems.\n");
                     
                     break;
                 default:
