@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
+#include <limits.h>
+#include <string.h>
 
 int generateRandomNumber(int, int);
 void generateRandomArray(int numbers[], int size, int min, int max, int maxDuplicates);
@@ -146,6 +148,12 @@ void firstComeFirstServeScheduling(int at[], int bt[], int priority[], int n)
     float awt = 0, atat = 0;
     int seqCounter = 0, sequence[100][2];
 
+    // Print out 3 arrays
+    //for (i = 0; i < n; i++)
+    //{
+    //    printf("P%d\t%d\t%d\t%d\n", processes[i], at[i], bt[i], priority[i]);
+    //}
+
     // Sort the processes based on arrival time using bubble sort
     for (i = 0; i < n; i++)
     {
@@ -230,6 +238,12 @@ void shortestJobFirst(int art[], int bt[], int priority[], int n)
     int total_wt = 0, total_tat = 0;
 
     int seqCounter = 0, sequence[100][2];
+
+    // Print out 3 arrays
+    // for (int i = 0; i < n; i++)
+    // {
+    //     printf("P[%d]\t%d\t%d\t%d\n", i + 1, art[i], bt[i], priority[i]);
+    // }
 
     // store burst time in temp array
     int rt[n];
@@ -324,6 +338,12 @@ void shortestRemainingTimeFirst(int arrival_time[], int burst_time[], int priori
     int temp[10], i, j, smallest, count = 0, time;
     float wait_time = 0, turnaround_time = 0, end;
     int seqCounter = 0, sequence[100][2];
+
+    // Print out 3 arrays
+    // for (i = 0; i < n; i++)
+    // {
+    //     printf("P[%d]\t\t%d\t\t%d\t\t%d\n", i + 1, arrival_time[i], burst_time[i], priority[i]);
+    // }
 
     // Copy burst time into a temp array
     for (i = 0; i < n; i++)
@@ -433,6 +453,12 @@ void roundRobinScheduling(int arrivalTime[], int burstTime[], int priority[], in
 
     int seqCounter = 0, sequence[100][2];
 
+    // Print out 3 arrays
+    // for (i = 0; i < limit; i++)
+    // {
+    //     printf("%d %d %d\n", arrivalTime[i], burstTime[i], priority[i]);
+    // }
+
     // create copy of burst time and arrival time
     int res_burst[10];
     int res_arrival[10];
@@ -539,6 +565,12 @@ void priorityScheduling(int at[], int bt[], int priority[], int n)
     float averageWaitingTime, averageTurnaroundTime;
     int seqCounter = 0, sequence[100][2];
 
+    // Print out 3 arrays
+    // for (i = 0; i < n; i++)
+    // {
+    //     printf("%d %d %d\n", at[i], bt[i], priority[i]);
+    // }
+
     for (i = 0; i < n; i++)
     {
         arrivalTime[i] = at[i];
@@ -613,10 +645,10 @@ int main()
             printf("Enter a number between 1 and 5 (1 for fcfs, 2 for sjf, 3 for srtf, 4 for rr, 5 for priority): ");
             scanf("%d", &userInput);
 
-            // output to txt
+            // Output to txt
             freopen("output.txt", "w", stdout);
 
-            // populate array with random data (NEED TO EDIT TO PROVIDE ARR/BURST GIVEN ALGO CHOSEN)
+            // Populate arrays with random data
             generateRandomArray(arrivalTime, 6, 0, 8, 3);
             generateRandomArray(burstTime, n, 3, 10, 3);
             generateRandomArray(priority, n, 1, 4, 2);
@@ -629,28 +661,60 @@ int main()
             }
             displayFooter();
 
-            // switch case based on choice
+            // Duplicate the arrays for each function call
+            int arrivalTimeCopy[10];
+            int burstTimeCopy[10];
+            int priorityCopy[10];
+            memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
+            memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
+            memcpy(priorityCopy, priority, sizeof(priority));
+
+            // Switch case based on choice
             switch (userInput)
             {
             case 1:
-                printf("You selected First come first serve scheduling.\n");
-                firstComeFirstServeScheduling(arrivalTime, burstTime, priority, n);
-                shortestJobFirst(arrivalTime, burstTime, priority, n);
-                shortestRemainingTimeFirst(arrivalTime, burstTime, priority, n);
-                roundRobinScheduling(arrivalTime, burstTime, priority, n);
-                priorityScheduling(arrivalTime, burstTime, priority, n);
+                printf("You selected First Come First Serve scheduling.\n");
+                firstComeFirstServeScheduling(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+                
+                // Duplicate the arrays again for subsequent function calls
+                memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
+                memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
+                memcpy(priorityCopy, priority, sizeof(priority));
+                
+                shortestJobFirst(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+                
+                // Duplicate the arrays again for subsequent function calls
+                memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
+                memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
+                memcpy(priorityCopy, priority, sizeof(priority));
+                
+                shortestRemainingTimeFirst(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+                
+                // Duplicate the arrays again for subsequent function calls
+                memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
+                memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
+                memcpy(priorityCopy, priority, sizeof(priority));
+                
+                roundRobinScheduling(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+                
+                // Duplicate the arrays again for subsequent function calls
+                memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
+                memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
+                memcpy(priorityCopy, priority, sizeof(priority));
+                
+                priorityScheduling(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
 
                 break;
             case 2:
-                printf("You selected Shortest job first scheduling.\n");
+                printf("You selected Shortest Job First scheduling.\n");
                 shortestJobFirst(arrivalTime, burstTime, priority, n);
                 break;
             case 3:
-                printf("You selected Shortest remaining time first scheduling.\n");
+                printf("You selected Shortest Remaining Time First scheduling.\n");
                 shortestRemainingTimeFirst(arrivalTime, burstTime, priority, n);
                 break;
             case 4:
-                printf("You selected Round robin scheduling.\n");
+                printf("You selected Round Robin scheduling.\n");
                 roundRobinScheduling(arrivalTime, burstTime, priority, n);
                 break;
             case 5:
@@ -662,14 +726,15 @@ int main()
                 break;
             }
 
-            // close stdout
+            // Close stdout
             fclose(stdout);
-// Restore standard output to console
-#ifdef _WIN32
-            freopen("CON", "w", stdout);
-#else
-            freopen("/dev/tty", "w", stdout);
-#endif
+
+            // Restore standard output to console
+            #ifdef _WIN32
+                freopen("CON", "w", stdout);
+            #else
+                freopen("/dev/tty", "w", stdout);
+            #endif
 
             FILE *file = fopen("output.txt", "r");
             char c;
@@ -689,5 +754,7 @@ int main()
         }
 
     } while (userInput != 0);
+    
     return 0;
 }
+
