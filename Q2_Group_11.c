@@ -342,10 +342,21 @@ void shortestRemainingTimeFirst(int arrival_time[], int burst_time[], int priori
                 smallest = i;
         }
         burst_time[smallest]--;
+
         // Sequence tracking
-        // sequence[seqCounter][0] = smallest + 1;
-        // sequence[seqCounter][1] = time + 1;
-        // seqCounter++;
+        // check if change in process has occured
+        if (seqCounter > 0 && sequence[seqCounter - 1][0] != smallest + 1)
+        {
+            sequence[seqCounter][0] = smallest + 1;
+            sequence[seqCounter][1] = time;
+            seqCounter++;
+        }
+        else if (seqCounter == 0)
+        {
+            sequence[seqCounter][0] = smallest + 1;
+            sequence[seqCounter][1] = time;
+            seqCounter++;
+        }
 
         // When Process is completed, add and calculate the waiting time and turnaround time
         if (burst_time[smallest] == 0)
@@ -356,13 +367,20 @@ void shortestRemainingTimeFirst(int arrival_time[], int burst_time[], int priori
             turnaround_time = turnaround_time + end - arrival_time[smallest];
         }
     }
+
+    printf("\nSequence: ");
+    for (i = 0; i < seqCounter; i++)
+    {
+        printf("P%d ", sequence[i][0]);
+    }
+
     // Print the Gantt Chart
-    // printf("\n\nSRTF Gantt Chart:\n");
-    // displaySequence(sequence, seqCounter);
+    printf("\n\nSRTF Gantt Chart:\n");
+    displaySequence(sequence, seqCounter);
 
     // Print average turnaround time and average waiting time
-    printf("Average Turnaround Time: %.3f", turnaround_time/n);
-    printf("\nAverage Waiting Time: %.3f\n", wait_time/n);
+    printf("Average Turnaround Time: %.3f", turnaround_time / n);
+    printf("\nAverage Waiting Time: %.3f\n", wait_time / n);
 }
 
 // Round robin
@@ -544,7 +562,8 @@ void priorityScheduling(int at[], int bt[], int priority[], int n)
         arrivalTime[i] = at[i];
         burstTime[i] = bt[i];
 
-        temp[i] = burstTime[i]; // adding a duplicate of the burst time to a temporary array
+        // adding a duplicate of the burst time to a temporary array
+        temp[i] = burstTime[i];
     }
 
     // Scheduling algorithm
