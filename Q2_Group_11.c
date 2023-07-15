@@ -752,7 +752,7 @@ int main()
             scanf("%d", &userInput);
 
             // output to txt
-            freopen("output.txt", "w", stdout);
+            freopen("Q2_Group_11.txt", "w", stdout);
 
             // populate array with random data
             generateRandomArray(arrivalTime, n, 0, 8, 3);
@@ -1047,7 +1047,7 @@ int main()
                         freopen("/dev/tty", "w", stdout);
             #endif
 
-            FILE *file = fopen("output.txt", "r");
+            FILE *file = fopen("Q2_Group_11.txt", "r");
             char c;
             while ((c = fgetc(file)) != EOF)
             {
