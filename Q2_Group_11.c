@@ -312,7 +312,7 @@ void shortestJobFirst(int art[], int bt[], int priority[], int n)
 void shortestRemainingTimeFirst(int arrivalTime[], int burstTime[], int priority[], int n)
 {
     // init variables
-    int arrival_time[10], burst_time[10], temp[10], i, j, p, smallest, count = 0, time=0;
+    int arrival_time[n], burst_time[n+1], temp[n], i, j, p, smallest, count = 0, time=0;
     float wait_time = 0, turnaround_time = 0, end;
     int seqCounter = 0, sequence[100][2];
 
@@ -322,25 +322,26 @@ void shortestRemainingTimeFirst(int arrivalTime[], int burstTime[], int priority
         burst_time[i] = burstTime[i];
         temp[i] = burst_time[i];
     }
-    burst_time[9] = 9999;
+    burst_time[n+1] = 9999;
 
     // Execute processes until all processes are completed
     for (time = 0; count != n; time++)
     {
-        smallest = 9;
+        smallest = n+1;
         for (i = 0; i < n; i++)
         {
             // Find the process with the minimum remaining time
             if (arrival_time[i] <= time && burst_time[i] <= burst_time[smallest] && burst_time[i] > 0)
             {
-                if (arrival_time[i] < arrival_time[smallest])
+                if (burst_time[i] < burst_time[smallest])
                 {
                     smallest = i;
                 }
-                else if (burst_time[i] < burst_time[smallest])
+                else if (arrival_time[i] < arrival_time[smallest])
                 {
                     smallest = i;
                 }
+                
             }
         }
         burst_time[smallest]--;
@@ -388,7 +389,7 @@ void shortestRemainingTimeFirst(int arrivalTime[], int burstTime[], int priority
     for (i=0; i<n;i++){
         responseTime[i] = false;
     }
-    for (i=1; i<seqCounter; i++){
+    for (i=0; i<seqCounter; i++){
         p = sequence[i][0] - 1;
         if (responseTime[p]==false){
             responseTime[p] = true;
