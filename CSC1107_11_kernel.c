@@ -460,7 +460,7 @@ int compare_hashes(const char* received_hash_str,
         return -1;
     }
 
-    /* Convert the received hash from hex to binary */
+    /* Convert the received hash from hex to bytes */
     for (size_t i = 0; i < hash_size; i++)
     {
         sscanf(&received_hash_str[2 * i], "%2hhx", &received_hash[i]);
