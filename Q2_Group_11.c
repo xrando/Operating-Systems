@@ -1009,28 +1009,28 @@ int main()
                     break;
                 case 5:
                     if (turnaround[4]==turnaround[smallest_turnaround]){
-                        printf("\nPS resulted in best turnaround time of %.4f!\n", turnaround[smallest_turnaround]);
+                        printf("\nPS resulted in best turnaround time of %.3f!\n", turnaround[smallest_turnaround]);
                     }
                     else{
                         printf("\n\nPS did not result in best turnaround time.%s resulted in best turnaround time of %.4f!\n", algos[smallest_turnaround], turnaround[smallest_turnaround]);
                     }
                     if (waiting[4]==waiting[smallest_waiting]){
-                        printf("\nPS resulted in best waiting time of %.4f!\n", waiting[smallest_waiting]);
+                        printf("\nPS resulted in best waiting time of %.3f!\n", waiting[smallest_waiting]);
                     }
                     else{
                         printf("\n\nPS did not result in best waiting time.%s resulted in best waiting time of %.4f!\n", algos[smallest_waiting], waiting[smallest_waiting]);
                     }
                     if (response[4]==response[smallest_response]){
-                        printf("\nPS resulted in best response time of %.4f!\n", response[smallest_response]);
+                        printf("\nPS resulted in best response time of %.3f!\n", response[smallest_response]);
                     }
                     else{
                         printf("\n\nPS did not result in best response time.%s resulted in best resposne time of %.4f!\n", algos[smallest_response], response[smallest_response]);
                     }
                     if (micros[4]==micros[smallest_exec]){
-                        printf("\nPS resulted in best execution time of %.4f!\n", micros[smallest_exec]);
+                        printf("\nPS resulted in best execution time of %d!\n", micros[smallest_exec]);
                     }
                     else{
-                        printf("\n\nPS did not result in best execution time.%s resulted in best execution time of %.4f!\n", algos[smallest_exec], micros[smallest_exec]);
+                        printf("\n\nPS did not result in best execution time.%s resulted in best execution time of %d!\n", algos[smallest_exec], micros[smallest_exec]);
                     }
                     break;
                 default:
