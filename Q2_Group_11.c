@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
+#include <unistd.h>  
+#include <sys/time.h>
 
 int generateRandomNumber(int, int);
 void generateRandomArray(int numbers[], int size, int min, int max, int maxDuplicates);
@@ -62,7 +64,7 @@ generateRandomArray(at, 6, 0, 8, 3);
 generateRandomArray(bt, 6, 3, 10, 3);
 generateRandomArray(priority, 6, 1, 4, 2);
 */
-void generateSpecificArray(int numbers[], int type) {
+void generateSpecificArray(int arr[], int burst[], int priority[], int n, int type) {
     //FCFS -> lots of short processes
 
     //SJF -> lots of short processes (distribution & arrival times, cannot have a long job then short job)
@@ -72,7 +74,7 @@ void generateSpecificArray(int numbers[], int type) {
     //RR -> if time quantum too large, behave like fcfs. if quantum time too small, too much switching. try big quantum time and large processes
 
     //PS -> priorities need to be well chosen
-
+    
 
 }
 void displayHeader()
@@ -131,7 +133,8 @@ void firstComeFirstServeScheduling(int at[], int bt[], int priority[], int n)
 {
     // Initialize variables
     int i, j, temp = 0, ct[n], tat[n], wt[n];
-    int processes[6] = {1, 2, 3, 4, 5, 6};
+    //int processes[6] = {1, 2, 3, 4, 5, 6};
+    int processes[n];
     float awt = 0, atat = 0;
     int seqCounter = 0, sequence[100][2];
 
@@ -690,42 +693,39 @@ int main() {
             //output to txt
             freopen("output.txt","w",stdout);
 
-            //populate array with random data (NEED TO EDIT TO PROVIDE ARR/BURST GIVEN ALGO CHOSEN)
-            //generateRandomArray(arrivalTime, n, 0, 8, 3);
-            //generateRandomArray(burstTime, n, 3, 10, 3);
-            //generateRandomArray(priority, n, 1, 4, 2);
+            //populate array with random data
+            generateRandomArray(arrivalTime, n, 0, 8, 3);
+            generateRandomArray(burstTime, n, 3, 10, 3);
+            generateRandomArray(priority, n, 1, 4, 2);
+           
 
             //switch case based on choice
             switch (userInput) 
             {
                 case 1:
                     printf("You selected First come first serve scheduling.\n");
-                    //populate array with random data (NEED TO EDIT TO PROVIDE ARR/BURST GIVEN ALGO CHOSEN)
-                    generateRandomArray(arrivalTime, n, 0, 8, 3);
-                    generateRandomArray(burstTime, n, 3, 10, 3);
-                    generateRandomArray(priority, n, 1, 4, 2);
+                    printf("FCFS will not result in the any best outcomes.(SRTF should be best outcome)\n");
+
                     break;
                 case 2:
                     printf("You selected Shortest job first scheduling.\n");
+                    printf("SJF should either result in shortest average turnaround & waiting (alongside SRTF)\nor have slightly higher values than SRTF\nSince SJF is a non-preemptive version of SRTF\n");
                     
                     break;
                 case 3:
                     printf("You selected Shortest remaining time first scheduling.\n");
-                    printf("\nThis set of arrival/burst times should result in shortest average turnaround & waiting \nbut not shorterst average response time...\n");
-                    generateRandomArray(arrivalTime, n, 0, 8, 3);
-                    generateRandomArray(burstTime, n, 3, 10, 3);
-                    generateRandomArray(priority, n, 1, 4, 2);
+                    printf("\nSRTF should result in shortest average turnaround & waiting \nbut not shorterst average response time...\n");
+                    
                     break;
                 case 4:
                     printf("You selected Round robin scheduling.\n");
-                    
+                    printf("\nRR should result in shortest average response time...\n");
+    
                     break;
                 case 5:
                     printf("You selected Priority scheduling.\n");
-                    //populate array with random data (NEED TO EDIT TO PROVIDE ARR/BURST GIVEN ALGO CHOSEN)
-                    generateRandomArray(arrivalTime, n, 0, 8, 3);
-                    generateRandomArray(burstTime, n, 3, 10, 3);
-                    generateRandomArray(priority, n, 1, 4, 2);
+                    printf("Priority Scheduling has high chance of resulting in the lowest execution time due to the use of priority values\nThis is best for real time operating systems.");
+                    
                     break;
                 default:
                     printf("Invalid input. Please enter a number between 1 and 5.\n");
@@ -744,30 +744,60 @@ int main() {
             int burstTimeCopy[n];
             int priorityCopy[n];
 
+
+            struct timeval start, end;
+            long seconds, micros;
+
             memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
             memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
             memcpy(priorityCopy, priority, sizeof(priority));
+            gettimeofday(&start, NULL);
             firstComeFirstServeScheduling(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+            gettimeofday(&end, NULL);
+            seconds = (end.tv_sec - start.tv_sec);
+            micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
+            printf("The elapsed time is %d seconds and %d micros\n", seconds, micros);
+        
 
             memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
             memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
             memcpy(priorityCopy, priority, sizeof(priority));
+            gettimeofday(&start, NULL);
             shortestJobFirst(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+            gettimeofday(&end, NULL);
+            seconds = (end.tv_sec - start.tv_sec);
+            micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
+            printf("The elapsed time is %d seconds and %d micros\n", seconds, micros);
 
             memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
             memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
             memcpy(priorityCopy, priority, sizeof(priority));
+            gettimeofday(&start, NULL);
             shortestRemainingTimeFirst(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+            gettimeofday(&end, NULL);
+            seconds = (end.tv_sec - start.tv_sec);
+            micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
+            printf("The elapsed time is %d seconds and %d micros\n", seconds, micros);
 
             memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
             memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
             memcpy(priorityCopy, priority, sizeof(priority));
+            gettimeofday(&start, NULL);
             roundRobinScheduling(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+            gettimeofday(&end, NULL);
+            seconds = (end.tv_sec - start.tv_sec);
+            micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
+            printf("The elapsed time is %d seconds and %d micros\n", seconds, micros);
 
             memcpy(arrivalTimeCopy, arrivalTime, sizeof(arrivalTime));
             memcpy(burstTimeCopy, burstTime, sizeof(burstTime));
             memcpy(priorityCopy, priority, sizeof(priority));
+            gettimeofday(&start, NULL);
             priorityScheduling(arrivalTimeCopy, burstTimeCopy, priorityCopy, n);
+            gettimeofday(&end, NULL);
+            seconds = (end.tv_sec - start.tv_sec);
+            micros = ((seconds * 1000000) + end.tv_usec) - (start.tv_usec);
+            printf("The elapsed time is %d seconds and %d micros\n", seconds, micros);
 
 
             //close stdout
