@@ -153,7 +153,6 @@ OutputValues firstComeFirstServeScheduling(int at[], int bt[], int priority[], i
 {
     // Initialize variables
     int i, j, temp = 0, ct[n], tat[n], wt[n];
-    // int processes[6] = {1, 2, 3, 4, 5, 6};
     int processes[n];
     float awt = 0, atat = 0;
     int seqCounter = 0, sequence[100][2];
@@ -233,12 +232,13 @@ OutputValues firstComeFirstServeScheduling(int at[], int bt[], int priority[], i
     awt = awt / n;
     printf("\nAverage turnaround time: %.3f\n", atat);
     printf("Average waiting time: %.3f\n", awt);
-    printf("Average response time: %.3f\n", awt); // non-preemptive response time = waiting time
+    // non-preemptive response time = waiting time
+    printf("Average response time: %.3f\n", awt); 
 
     result.atat = atat;
     result.awt = awt;
     result.art = awt;
-
+    //return result struct
     return result;
 }
 
@@ -257,21 +257,24 @@ OutputValues shortestJobFirst(int art[], int bt[], int priority[], int n)
     {
         rt[i] = bt[i];
     }
-
+    //init conditions
+    // Variables to track the completion time and current time
     int complete = 0, t = 0;
+    // Variables to store the index of the process with the shortest burst time and its finish time
     int shortest = -1, finish_time;
 
-    // Process until all processes get completed
+    // Loop until all processes get completed
     while (complete != n)
     {
         shortest = -1;
         int min_bt = INT_MAX;
 
-        // Find the process with the minimum remaining time
+        // Find the process with the shortest burst time among the arrived processes
         for (int j = 0; j < n; j++)
         {
             if (art[j] <= t && rt[j] < min_bt && rt[j] > 0)
             {
+                // Check if the current process has arrived and has a shorter burst time than the previous shortest process
                 if (art[j] == 0)
                 {
                     shortest = j;
@@ -288,11 +291,12 @@ OutputValues shortestJobFirst(int art[], int bt[], int priority[], int n)
 
         if (shortest == -1)
         {
+            // Increment time if no process is available to execute
             t++;
             continue;
         }
 
-        // Reduce the remaining time by one
+        // Reduce the remaining time of the selected process by one
         rt[shortest]--;
 
         // If a process gets completely executed
@@ -303,13 +307,15 @@ OutputValues shortestJobFirst(int art[], int bt[], int priority[], int n)
             // Find the finish time of the current process
             finish_time = t + 1;
 
-            // Calculate the waiting time
+            // Calculate the waiting time for the current process
             wt[shortest] = finish_time - bt[shortest] - art[shortest];
             if (wt[shortest] < 0)
                 wt[shortest] = 0;
 
-            // Sequence tracking
+            // Store the executed process and its finish time in the sequence array
+            // Store the process number (index + 1)
             sequence[seqCounter][0] = shortest + 1;
+            // Store the finish time
             sequence[seqCounter][1] = finish_time;
             seqCounter++;
         }
@@ -318,7 +324,7 @@ OutputValues shortestJobFirst(int art[], int bt[], int priority[], int n)
         t++;
     }
 
-    // Calculate turnaround time
+    // Calculate turnaround time for each process and update the total waiting time and total turnaround time
     for (int i = 0; i < n; i++)
     {
         tat[i] = bt[i] + wt[i];
@@ -336,12 +342,13 @@ OutputValues shortestJobFirst(int art[], int bt[], int priority[], int n)
     float avg_tat = (float)total_tat / (float)n;
     printf("\nAverage turnaround time = %.3f", avg_tat);
     printf("\nAverage waiting time = %.3f\n", avg_wt);
-    printf("Average response time: %.3f\n", avg_wt); // non-preemptive response time = waiting time
-
+    // non-preemptive response time = waiting time
+    printf("Average response time: %.3f\n", avg_wt); 
+    // Update the result struct with the calculated values
     result.atat = avg_tat;
     result.awt = avg_wt;
     result.art = avg_wt;
-
+    // Return the result struct
     return result;
 }
 
