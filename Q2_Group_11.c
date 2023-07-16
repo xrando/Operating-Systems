@@ -636,7 +636,7 @@ OutputValues roundRobinScheduling(int arrivalTime[], int burstTime[], int priori
     return result;
 }
 
-// Priority scheduling (only works for arrival time = 0)
+// Priority scheduling 
 OutputValues priorityScheduling(int at[], int bt[], int priority[], int n)
 {
     int i, p;
